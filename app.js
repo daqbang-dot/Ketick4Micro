@@ -22,17 +22,62 @@ function toggleTheme() {
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
-    
     document.getElementById(tabId).classList.remove('hidden');
     const btnId = tabId.replace('tab-', 'btn-');
     document.getElementById(btnId).classList.add('active-tab');
-    
     renderAll(); 
+}
+
+// --- SISTEM BUSINESS SETTINGS ---
+let bizInfo = JSON.parse(localStorage.getItem('ketick_biz')) || {
+    name: "KETICK BUSINESS",
+    address: "Alamat Kedai Anda",
+    phone: "012-3456789",
+    bank: "MAYBANK",
+    accNo: "1234567890",
+    accName: "NAMA PEMILIK",
+    logo: "" 
+};
+
+function openSettings() {
+    document.getElementById('settings-page').classList.remove('hidden');
+    document.getElementById('biz-name').value = bizInfo.name;
+    document.getElementById('biz-address').value = bizInfo.address;
+    document.getElementById('biz-phone').value = bizInfo.phone;
+    document.getElementById('biz-bank').value = bizInfo.bank;
+    document.getElementById('biz-acc-no').value = bizInfo.accNo;
+    document.getElementById('biz-acc-name').value = bizInfo.accName;
+    if(bizInfo.logo) document.getElementById('logo-preview').src = bizInfo.logo;
+}
+
+function closeSettings() { document.getElementById('settings-page').classList.add('hidden'); }
+
+function previewLogo(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('logo-preview').src = e.target.result;
+            bizInfo.logo = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function saveSettings() {
+    bizInfo.name = document.getElementById('biz-name').value;
+    bizInfo.address = document.getElementById('biz-address').value;
+    bizInfo.phone = document.getElementById('biz-phone').value;
+    bizInfo.bank = document.getElementById('biz-bank').value;
+    bizInfo.accNo = document.getElementById('biz-acc-no').value;
+    bizInfo.accName = document.getElementById('biz-acc-name').value;
+    localStorage.setItem('ketick_biz', JSON.stringify(bizInfo));
+    alert("Settings Saved!");
+    closeSettings();
 }
 
 // --- KONFIGURASI DATA ---
 let products = JSON.parse(localStorage.getItem('ketick_products')) || [
-    { id: 1, name: "Sample Item", price: 10.00, qty: 5, desc: "Contoh produk", img: "https://via.placeholder.com/150/4D30FF/FFFFFF?text=Ketick" }
+    { id: 1, name: "Sample Item", price: 10.00, qty: 5, img: "https://via.placeholder.com/150/4D30FF/FFFFFF?text=Ketick" }
 ];
 let nextBillNo = parseInt(localStorage.getItem('ketick_bill_no')) || 1001;
 let cart = [];
@@ -45,69 +90,50 @@ async function generatePDF(type, billNo, items, total) {
     const isLight = document.documentElement.classList.contains('light-mode');
     const accentColor = isLight ? [255, 83, 0] : [77, 48, 255];
 
-    doc.setFontSize(22);
-    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
-    doc.text("KETICK4MICRO", 14, 20);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Jenis Dokumen: ${type}`, 14, 30);
-    doc.text(`No. Rujukan: #${billNo}`, 14, 35);
-    doc.text(`Tarikh: ${date}`, 14, 40);
+    if(bizInfo.logo) { try { doc.addImage(bizInfo.logo, 'PNG', 14, 10, 25, 25); } catch(e) {} }
 
-    const tableData = items.map((item, index) => [
-        index + 1, item.name, `1`, `RM ${item.price.toFixed(2)}`, `RM ${item.price.toFixed(2)}`
-    ]);
+    doc.setFontSize(16); doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.text(bizInfo.name.toUpperCase(), 200, 20, { align: 'right' });
+    doc.setFontSize(8); doc.setTextColor(100);
+    doc.text(bizInfo.address, 200, 26, { align: 'right' });
+    doc.text(`Phone: ${bizInfo.phone}`, 200, 30, { align: 'right' });
 
-    doc.autoTable({
-        startY: 50,
-        head: [['No', 'Produk', 'Qty', 'Unit Price', 'Total']],
-        body: tableData,
-        headStyles: { fillColor: accentColor },
-        theme: 'striped'
-    });
+    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.line(14, 40, 200, 40);
 
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(12); doc.setTextColor(0); doc.setFont("helvetica", "bold");
-    doc.text(`TOTAL AMOUNT: RM ${total.toFixed(2)}`, 140, finalY);
+    doc.setFontSize(12); doc.setTextColor(0);
+    doc.text(`${type}: #${billNo}`, 14, 50);
+    doc.setFontSize(9); doc.text(`Tarikh: ${date}`, 14, 55);
 
-    doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(150);
-    doc.text(type === 'QUOTATION' ? "* Valid for 30 days." : "* Thank you for your business.", 14, finalY + 20);
+    const tableData = items.map((item, index) => [index + 1, item.name, `1`, `RM ${item.price.toFixed(2)}`, `RM ${item.price.toFixed(2)}`]);
+    doc.autoTable({ startY: 60, head: [['No', 'Produk', 'Qty', 'Price', 'Total']], body: tableData, headStyles: { fillColor: accentColor } });
+
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(12); doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL: RM ${total.toFixed(2)}`, 200, finalY, { align: 'right' });
+
+    doc.setFontSize(10); doc.text("PAYMENT INFO:", 14, finalY);
+    doc.setFontSize(9); doc.setFont("helvetica", "normal");
+    doc.text(`Bank: ${bizInfo.bank} | Acc: ${bizInfo.accNo}`, 14, finalY + 6);
+    doc.text(`Name: ${bizInfo.accName}`, 14, finalY + 11);
 
     doc.save(`KETICK_${type}_${billNo}.pdf`);
 }
 
-// --- FUNGSI TRANSAKSI ---
+// --- FUNGSI TRANSAKSI & RENDER ---
 function processTransaction(type) {
     if (cart.length === 0) return alert("Cart is empty!");
     const total = cart.reduce((sum, item) => sum + item.price, 0);
     const itemsCopy = [...cart];
-    const currentBill = nextBillNo;
-
     if (type === 'RECEIPT') {
-        cart.forEach(item => {
-            let p = products.find(prod => prod.id === item.id);
-            if (p) p.qty -= 1; 
-        });
-        generatePDF('RECEIPT', currentBill, itemsCopy, total);
+        cart.forEach(item => { let p = products.find(prod => prod.id === item.id); if (p) p.qty -= 1; });
+        generatePDF('RECEIPT', nextBillNo, itemsCopy, total);
         nextBillNo++;
-    } else {
-        generatePDF(type, currentBill, itemsCopy, total);
-    }
-
-    cart = [];
-    saveData();
-    renderAll();
+    } else { generatePDF(type, nextBillNo, itemsCopy, total); }
+    cart = []; saveData(); renderAll();
 }
 
-// --- FUNGSI RENDER UTAMA ---
-function renderAll() {
-    renderCatalog();
-    renderPOSSelect();
-    renderCart();
-    renderInventory();
-    updateBillDisplay();
-}
+function renderAll() { renderCatalog(); renderPOSSelect(); renderCart(); renderInventory(); updateBillDisplay(); }
 
 function renderCatalog(filter = "") {
     const container = document.getElementById('catalog-list');
@@ -116,7 +142,7 @@ function renderCatalog(filter = "") {
         <div class="glass-card p-3 text-center">
             <img src="${p.img}" class="w-full h-24 object-cover rounded-lg mb-2">
             <p class="text-xs font-bold truncate">${p.name}</p>
-            <p class="text-accent text-sm">RM ${p.price.toFixed(2)}</p>
+            <p class="text-accent text-sm font-bold">RM ${p.price.toFixed(2)}</p>
             <p class="text-[10px] opacity-50">Stock: ${p.qty}</p>
         </div>
     `).join('');
@@ -125,10 +151,8 @@ function renderCatalog(filter = "") {
 function renderPOSSelect() {
     const container = document.getElementById('pos-select-list');
     container.innerHTML = products.map(p => `
-        <button onclick="addToCart(${p.id})" class="glass-card p-2 text-[10px] flex flex-col items-center hover:border-accent">
-            <div class="w-10 h-10 bg-white/10 rounded-full mb-1 overflow-hidden">
-                <img src="${p.img}" class="w-full h-full object-cover">
-            </div>
+        <button onclick="addToCart(${p.id})" class="glass-card p-2 text-[10px] flex flex-col items-center">
+            <div class="w-10 h-10 bg-white/10 rounded-full mb-1 overflow-hidden"><img src="${p.img}" class="w-full h-full object-cover"></div>
             <span class="truncate w-full">${p.name}</span>
         </button>
     `).join('');
@@ -138,69 +162,36 @@ function renderInventory() {
     const container = document.getElementById('inventory-list');
     container.innerHTML = products.map(p => `
         <div class="glass-card p-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <img src="${p.img}" class="w-10 h-10 rounded-lg object-cover">
-                <div>
-                    <p class="font-bold text-sm">${p.name}</p>
-                    <p class="text-xs opacity-50">RM ${p.price.toFixed(2)} | Stock: ${p.qty}</p>
-                </div>
-            </div>
-            <button onclick="deleteProduct(${p.id})" class="text-red-500 p-2">🗑️</button>
+            <div class="flex items-center gap-3"><img src="${p.img}" class="w-10 h-10 rounded-lg object-cover"><div><p class="font-bold text-sm">${p.name}</p><p class="text-xs opacity-50">RM ${p.price.toFixed(2)} | Stock: ${p.qty}</p></div></div>
+            <button onclick="deleteProduct(${p.id})" class="text-red-500">🗑️</button>
         </div>
     `).join('');
 }
 
-// --- FUNGSI MANIPULASI DATA ---
 function addNewProduct() {
     const name = document.getElementById('p-name').value;
     const price = parseFloat(document.getElementById('p-price').value);
     const qty = parseInt(document.getElementById('p-qty').value);
     const imgInput = document.getElementById('p-img');
-    
-    if (!name || isNaN(price)) return alert("Isi Nama & Harga!");
-
-    const process = (img) => {
-        products.push({ id: Date.now(), name, price, qty: qty || 0, img });
-        saveData(); renderAll(); clearInputs();
-    };
-
-    if (imgInput.files && imgInput.files[0]) {
-        const r = new FileReader(); r.onload = (e) => process(e.target.result); r.readAsDataURL(imgInput.files[0]);
-    } else process("https://via.placeholder.com/150/4D30FF/FFFFFF?text=Ketick");
+    if (!name || isNaN(price)) return alert("Fill Name & Price!");
+    const process = (img) => { products.push({ id: Date.now(), name, price, qty: qty || 0, img }); saveData(); renderAll(); clearInputs(); };
+    if (imgInput.files && imgInput.files[0]) { const r = new FileReader(); r.onload = (e) => process(e.target.result); r.readAsDataURL(imgInput.files[0]); }
+    else process("https://via.placeholder.com/150/4D30FF/FFFFFF?text=Ketick");
 }
 
-function deleteProduct(id) {
-    if(confirm("Hapus produk ini?")) {
-        products = products.filter(p => p.id !== id);
-        saveData(); renderAll();
-    }
-}
-
-function addToCart(id) {
-    const p = products.find(p => p.id === id);
-    if (p.qty <= 0) return alert("Out of stock!");
-    cart.push({ ...p }); renderCart();
-}
-
+function deleteProduct(id) { if(confirm("Hapus produk ini?")) { products = products.filter(p => p.id !== id); saveData(); renderAll(); } }
+function addToCart(id) { const p = products.find(p => p.id === id); if (p.qty <= 0) return alert("No stock!"); cart.push({ ...p }); renderCart(); }
 function renderCart() {
     const container = document.getElementById('cart-items');
     let total = 0;
     if (cart.length === 0) container.innerHTML = `<p class="opacity-50 text-sm italic text-center py-10">Empty...</p>`;
-    else container.innerHTML = cart.map((item, i) => {
-        total += item.price;
-        return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-            <div><p class="text-sm font-semibold">${item.name}</p><p class="text-xs text-accent">RM ${item.price.toFixed(2)}</p></div>
-            <button onclick="removeFromCart(${i})" class="opacity-50 hover:text-red-500">×</button>
-        </div>`;
-    }).join('');
+    else container.innerHTML = cart.map((item, i) => { total += item.price; return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5"><div><p class="text-sm font-semibold">${item.name}</p><p class="text-xs text-accent">RM ${item.price.toFixed(2)}</p></div><button onclick="removeFromCart(${i})" class="opacity-50 hover:text-red-500">×</button></div>`; }).join('');
     document.getElementById('total-price').innerText = `RM ${total.toFixed(2)}`;
 }
-
 function removeFromCart(i) { cart.splice(i, 1); renderCart(); }
 function cancelBill() { if (cart.length > 0 && confirm("Cancel?")) { cart = []; renderCart(); } }
 function saveData() { localStorage.setItem('ketick_products', JSON.stringify(products)); localStorage.setItem('ketick_bill_no', nextBillNo.toString()); }
 function updateBillDisplay() { document.getElementById('next-bill-no-display').innerText = `#${nextBillNo}`; }
 function clearInputs() { document.querySelectorAll('input, textarea').forEach(i => i.value = ''); }
 
-// Mula sistem
 renderAll();
