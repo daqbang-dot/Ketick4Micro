@@ -6,8 +6,11 @@
     <title>KETICK4MICRO - POS System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
     <style>
-        /* Default: Dark Mode (Cosmic) */
         :root {
             --bg-main: #020107;
             --card-bg: rgba(77, 48, 255, 0.05);
@@ -19,7 +22,6 @@
             --input-bg: #0f0e17;
         }
 
-        /* Light Mode (Signal Orange) */
         :root.light-mode {
             --bg-main: #FFFFFF;
             --card-bg: rgba(255, 83, 0, 0.05);
@@ -73,14 +75,13 @@
     <header class="flex justify-between items-center mb-10">
         <div>
             <h1 class="text-3xl font-bold gradient-text text-accent">KETICK4MICRO</h1>
-            <p class="text-xs var(--text-muted)">Micro POS & Stock System</p>
+            <p class="text-xs" style="color: var(--text-muted)">Micro POS & Stock System</p>
         </div>
         
         <div class="flex items-center gap-4">
             <button onclick="toggleTheme()" class="glass-card p-3 hover:scale-110 transition shadow-lg">
                 <span id="theme-icon">🌙</span>
             </button>
-
             <div id="bill-display" class="glass-card px-6 py-3 text-sm">
                 Next No: <span id="next-bill-no" class="text-accent font-mono text-lg font-bold">#1001</span>
             </div>
@@ -93,14 +94,12 @@
                 <span class="w-2 h-2 bg-accent rounded-full mr-2" style="background-color: var(--accent)"></span> 
                 Product Catalog
             </h2>
-            <div id="catalog" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                </div>
+            <div id="catalog" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
         </div>
 
         <div class="glass-card p-6 h-fit sticky top-8">
             <h2 class="text-xl mb-4 font-semibold">Current Bill</h2>
-            <div id="cart-items" class="space-y-3 mb-6 min-h-[150px] max-h-[400px] overflow-y-auto">
-                </div>
+            <div id="cart-items" class="space-y-3 mb-6 min-h-[150px] max-h-[400px] overflow-y-auto"></div>
             
             <div class="border-t border-gray-800 pt-4">
                 <div class="flex justify-between mb-4">
@@ -131,15 +130,13 @@
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <input type="text" id="p-name" placeholder="Product Name" class="p-3 rounded-xl">
-            <input type="number" id="p-price" placeholder="Selling Price (RM)" class="p-3 rounded-xl">
-            <input type="number" id="p-qty" placeholder="Current Stock" class="p-3 rounded-xl">
-            <input type="file" id="p-img" class="text-xs pt-2 cursor-pointer" style="color: var(--text-muted)">
+            <input type="number" id="p-price" placeholder="Price (RM)" class="p-3 rounded-xl">
+            <input type="number" id="p-qty" placeholder="Stock" class="p-3 rounded-xl">
+            <input type="file" id="p-img" class="text-xs pt-2 cursor-pointer">
         </div>
-        <textarea id="p-desc" placeholder="Product Description..." class="w-full mt-4 p-3 rounded-xl h-20"></textarea>
+        <textarea id="p-desc" placeholder="Description..." class="w-full mt-4 p-3 rounded-xl h-20"></textarea>
         <div class="mt-4 flex justify-end">
-            <button onclick="addNewProduct()" class="btn-primary px-10 py-3 rounded-xl font-bold">
-                Add to Stock
-            </button>
+            <button onclick="addNewProduct()" class="btn-primary px-10 py-3 rounded-xl font-bold">Add to Stock</button>
         </div>
     </section>
 
