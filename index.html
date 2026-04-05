@@ -83,9 +83,14 @@
         <div>
             <h1 class="text-2xl font-bold gradient-text text-accent">KETICK4MICRO</h1>
         </div>
-        <button onclick="toggleTheme()" class="glass-card p-2 shadow-lg">
-            <span id="theme-icon">🌙</span>
-        </button>
+        <div class="flex gap-2">
+            <button onclick="toggleTheme()" class="glass-card p-2 shadow-lg">
+                <span id="theme-icon">🌙</span>
+            </button>
+            <button onclick="openSettings()" class="glass-card p-2 shadow-lg">
+                <span>⚙️</span>
+            </button>
+        </div>
     </header>
 
     <nav class="flex gap-2 mb-6 bg-white/5 p-1 rounded-2xl glass-card">
@@ -93,6 +98,40 @@
         <button onclick="switchTab('tab-pos')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-sm transition" id="btn-pos">POS & Bill</button>
         <button onclick="switchTab('tab-inventory')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-sm transition" id="btn-inventory">Inventory</button>
     </nav>
+
+    <div id="settings-page" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[100] hidden overflow-y-auto p-6">
+        <div class="max-w-xl mx-auto">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-accent">Business Settings</h2>
+                <button onclick="closeSettings()" class="text-2xl">✕</button>
+            </div>
+            <div class="space-y-6">
+                <div class="glass-card p-6 border-dashed border-2 border-accent/20 text-center">
+                    <p class="text-xs mb-4 opacity-60 uppercase tracking-widest">Company Logo</p>
+                    <div class="mb-4 flex justify-center">
+                        <img id="logo-preview" src="https://via.placeholder.com/100" class="h-20 w-auto object-contain bg-white/10 p-2 rounded">
+                    </div>
+                    <input type="file" id="biz-logo" onchange="previewLogo(this)" class="hidden">
+                    <label for="biz-logo" class="btn-primary px-6 py-2 rounded-xl text-sm font-bold cursor-pointer inline-block">Pick Image</label>
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <input type="text" id="biz-name" placeholder="Business Name" class="p-4 rounded-2xl w-full">
+                    <textarea id="biz-address" placeholder="Business Address" class="p-4 rounded-2xl w-full h-24"></textarea>
+                    <input type="text" id="biz-phone" placeholder="Phone Number" class="p-4 rounded-2xl w-full">
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="text-sm font-bold mb-4 opacity-70">Payment Information</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <input type="text" id="biz-bank" placeholder="Bank Name (e.g. Maybank)" class="p-4 rounded-2xl w-full">
+                        <input type="text" id="biz-acc-no" placeholder="Account Number" class="p-4 rounded-2xl w-full">
+                        <input type="text" id="biz-acc-name" placeholder="Account Holder Name" class="p-4 rounded-2xl w-full">
+                    </div>
+                </div>
+                <button onclick="saveSettings()" class="w-full btn-primary py-4 rounded-2xl font-bold shadow-xl">SAVE SETTINGS</button>
+                <div class="h-10"></div>
+            </div>
+        </div>
+    </div>
 
     <div id="tab-catalog" class="tab-content">
         <div class="mb-4">
