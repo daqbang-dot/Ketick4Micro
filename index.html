@@ -7,47 +7,91 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Default: Dark Mode (Cosmic) */
+        :root {
+            --bg-main: #020107;
+            --card-bg: rgba(77, 48, 255, 0.05);
+            --accent: #CB7CFD;
+            --accent-gradient: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%);
+            --text-main: #FFFFFF;
+            --text-muted: #94a3b8;
+            --border-color: rgba(203, 124, 253, 0.1);
+            --input-bg: #0f0e17;
+        }
+
+        /* Light Mode (Signal Orange) */
+        :root.light-mode {
+            --bg-main: #FFFFFF;
+            --card-bg: rgba(255, 83, 0, 0.05);
+            --accent: #FF5300;
+            --accent-gradient: linear-gradient(135deg, #1B0B03 0%, #FF5300 100%);
+            --text-main: #130600;
+            --text-muted: #64748b;
+            --border-color: rgba(255, 83, 0, 0.2);
+            --input-bg: #f8fafc;
+        }
+
         body {
-            background-color: #020107; /* Space Black */
-            color: #FFFFFF;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: all 0.3s ease;
             font-family: 'Inter', sans-serif;
         }
+
         .glass-card {
-            background: rgba(77, 48, 255, 0.05);
+            background: var(--card-bg);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(203, 124, 253, 0.1);
+            border: 1px solid var(--border-color);
             border-radius: 1.5rem;
         }
+
         .gradient-text {
-            background: linear-gradient(90deg, #CB7CFD, #4D30FF);
+            background: var(--accent-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+
         .btn-primary {
-            background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%);
+            background: var(--accent-gradient);
+            color: white !important;
             transition: transform 0.2s, opacity 0.2s;
         }
         .btn-primary:hover { transform: scale(1.02); opacity: 0.9; }
-        input, textarea { outline: none; }
+
+        input, textarea {
+            background-color: var(--input-bg) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border-color) !important;
+            outline: none;
+        }
+        
+        .text-accent { color: var(--accent); }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
     <header class="flex justify-between items-center mb-10">
         <div>
-            <h1 class="text-3xl font-bold gradient-text">KETICK4MICRO</h1>
-            <p class="text-xs text-gray-500">Micro POS & Stock System</p>
+            <h1 class="text-3xl font-bold gradient-text text-accent">KETICK4MICRO</h1>
+            <p class="text-xs var(--text-muted)">Micro POS & Stock System</p>
         </div>
-        <div id="bill-display" class="glass-card px-6 py-3 text-sm border-purple-500/30">
-            Next No: <span id="next-bill-no" class="text-pink-400 font-mono text-lg font-bold">#1001</span>
+        
+        <div class="flex items-center gap-4">
+            <button onclick="toggleTheme()" class="glass-card p-3 hover:scale-110 transition shadow-lg">
+                <span id="theme-icon">🌙</span>
+            </button>
+
+            <div id="bill-display" class="glass-card px-6 py-3 text-sm">
+                Next No: <span id="next-bill-no" class="text-accent font-mono text-lg font-bold">#1001</span>
+            </div>
         </div>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         <div class="lg:col-span-2">
             <h2 class="text-xl mb-4 font-semibold flex items-center">
-                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span> Product Catalog
+                <span class="w-2 h-2 bg-accent rounded-full mr-2" style="background-color: var(--accent)"></span> 
+                Product Catalog
             </h2>
             <div id="catalog" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 </div>
@@ -60,19 +104,19 @@
             
             <div class="border-t border-gray-800 pt-4">
                 <div class="flex justify-between mb-4">
-                    <span class="text-gray-400">Total Amount</span>
-                    <span id="total-price" class="font-bold text-2xl text-pink-400">RM 0.00</span>
+                    <span style="color: var(--text-muted)">Total Amount</span>
+                    <span id="total-price" class="font-bold text-2xl text-accent">RM 0.00</span>
                 </div>
                 
                 <div class="space-y-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="processTransaction('QUOTATION')" class="border border-purple-500 text-purple-400 py-2 rounded-lg hover:bg-purple-500/10 transition text-sm">Quotation</button>
-                        <button onclick="processTransaction('INVOICE')" class="border border-blue-500 text-blue-400 py-2 rounded-lg hover:bg-blue-500/10 transition text-sm">Invoice</button>
+                        <button onclick="processTransaction('QUOTATION')" class="border border-accent text-accent py-2 rounded-lg hover:bg-accent/10 transition text-sm">Quotation</button>
+                        <button onclick="processTransaction('INVOICE')" class="border border-blue-500 text-blue-500 py-2 rounded-lg hover:bg-blue-500/10 transition text-sm">Invoice</button>
                     </div>
-                    <button onclick="processTransaction('RECEIPT')" class="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20">
+                    <button onclick="processTransaction('RECEIPT')" class="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg">
                         CONFIRM & RECEIPT
                     </button>
-                    <button onclick="cancelBill()" class="w-full text-gray-500 py-2 text-sm hover:text-red-400 transition">
+                    <button onclick="cancelBill()" class="w-full text-sm hover:text-red-500 transition" style="color: var(--text-muted)">
                         Cancel Transaction
                     </button>
                 </div>
@@ -80,17 +124,18 @@
         </div>
     </div>
 
-    <section class="mt-12 glass-card p-8 border-t-4 border-purple-600">
+    <section class="mt-12 glass-card p-8 border-t-4" style="border-top-color: var(--accent)">
         <h2 class="text-xl font-bold mb-6 flex items-center">
-            <span class="bg-purple-600 w-2 h-6 mr-3 rounded"></span> Inventory Management
+            <span class="w-2 h-6 mr-3 rounded" style="background-color: var(--accent)"></span> 
+            Inventory Management
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <input type="text" id="p-name" placeholder="Product Name" class="bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500">
-            <input type="number" id="p-price" placeholder="Selling Price (RM)" class="bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500">
-            <input type="number" id="p-qty" placeholder="Current Stock" class="bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500">
-            <input type="file" id="p-img" class="text-xs text-gray-400 pt-2 cursor-pointer">
+            <input type="text" id="p-name" placeholder="Product Name" class="p-3 rounded-xl">
+            <input type="number" id="p-price" placeholder="Selling Price (RM)" class="p-3 rounded-xl">
+            <input type="number" id="p-qty" placeholder="Current Stock" class="p-3 rounded-xl">
+            <input type="file" id="p-img" class="text-xs pt-2 cursor-pointer" style="color: var(--text-muted)">
         </div>
-        <textarea id="p-desc" placeholder="Product Description..." class="w-full mt-4 bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500 h-20"></textarea>
+        <textarea id="p-desc" placeholder="Product Description..." class="w-full mt-4 p-3 rounded-xl h-20"></textarea>
         <div class="mt-4 flex justify-end">
             <button onclick="addNewProduct()" class="btn-primary px-10 py-3 rounded-xl font-bold">
                 Add to Stock
