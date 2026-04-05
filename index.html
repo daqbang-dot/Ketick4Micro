@@ -85,7 +85,6 @@
     </style>
 
     <script>
-        // Pendaftaran Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -145,7 +144,13 @@
                         <input type="text" id="biz-acc-name" placeholder="Account Holder Name" class="p-4 rounded-2xl w-full">
                     </div>
                 </div>
+                
                 <button onclick="saveSettings()" class="w-full btn-primary py-4 rounded-2xl font-bold shadow-xl">SAVE SETTINGS</button>
+                
+                <button id="install-button" class="w-full bg-white/10 py-4 rounded-2xl font-bold border border-white/20 hidden">
+                    📥 INSTALL KETICK APP
+                </button>
+                
                 <div class="h-10"></div>
             </div>
         </div>
