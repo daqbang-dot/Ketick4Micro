@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ketick-v2';
+const CACHE_NAME = 'ketick-v3';
 const ASSETS = [
   './',
   './index.html',
