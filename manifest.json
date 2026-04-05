@@ -12,6 +12,7 @@
   "start_url": "./index.html",
   "background_color": "#020107",
   "display": "standalone",
+  "orientation": "portrait",
   "scope": "./",
   "theme_color": "#4D30FF",
   "description": "Micro POS & Stock System by Ketick"
