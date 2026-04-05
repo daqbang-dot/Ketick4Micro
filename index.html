@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KETICK4MICRO - POS System</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #020107; /* Space Black */
@@ -12,9 +13,9 @@
             font-family: 'Inter', sans-serif;
         }
         .glass-card {
-            background: rgba(77, 48, 255, 0.05); /* Midnight Purple low opacity */
+            background: rgba(77, 48, 255, 0.05);
             backdrop-filter: blur(12px);
-            border: 1px solid rgba(203, 124, 253, 0.1); /* Cosmic Pink border */
+            border: 1px solid rgba(203, 124, 253, 0.1);
             border-radius: 1.5rem;
         }
         .gradient-text {
@@ -24,55 +25,76 @@
         }
         .btn-primary {
             background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%);
-            transition: transform 0.2s;
+            transition: transform 0.2s, opacity 0.2s;
         }
-        .btn-primary:hover { transform: scale(1.05); }
+        .btn-primary:hover { transform: scale(1.02); opacity: 0.9; }
+        input, textarea { outline: none; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-8">
 
     <header class="flex justify-between items-center mb-10">
-        <h1 class="text-3xl font-bold gradient-text">KETICK4MICRO</h1>
-        <div id="bill-display" class="glass-card px-4 py-2 text-sm">
-            Next Bill: <span id="next-bill-no" class="text-pink-400 font-mono">#1001</span>
+        <div>
+            <h1 class="text-3xl font-bold gradient-text">KETICK4MICRO</h1>
+            <p class="text-xs text-gray-500">Micro POS & Stock System</p>
+        </div>
+        <div id="bill-display" class="glass-card px-6 py-3 text-sm border-purple-500/30">
+            Next No: <span id="next-bill-no" class="text-pink-400 font-mono text-lg font-bold">#1001</span>
         </div>
     </header>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         <div class="lg:col-span-2">
-            <h2 class="text-xl mb-4 font-semibold">Product Catalog</h2>
+            <h2 class="text-xl mb-4 font-semibold flex items-center">
+                <span class="w-2 h-2 bg-pink-500 rounded-full mr-2"></span> Product Catalog
+            </h2>
             <div id="catalog" class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 </div>
         </div>
 
-        <div class="glass-card p-6 h-fit">
+        <div class="glass-card p-6 h-fit sticky top-8">
             <h2 class="text-xl mb-4 font-semibold">Current Bill</h2>
-            <div id="cart-items" class="space-y-4 mb-6 min-h-[200px]">
-                <p class="text-gray-500 text-sm italic">No items selected...</p>
-            </div>
+            <div id="cart-items" class="space-y-3 mb-6 min-h-[150px] max-h-[400px] overflow-y-auto">
+                </div>
             
             <div class="border-t border-gray-800 pt-4">
-                <div class="flex justify-between mb-2">
-                    <span>Total</span>
-                    <span id="total-price" class="font-bold text-xl">RM 0.00</span>
+                <div class="flex justify-between mb-4">
+                    <span class="text-gray-400">Total Amount</span>
+                    <span id="total-price" class="font-bold text-2xl text-pink-400">RM 0.00</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mt-4">
-                    <button onclick="cancelBill()" class="bg-gray-800 py-3 rounded-xl hover:bg-red-900 transition">Cancel</button>
-                    <button onclick="checkout()" class="btn-primary py-3 rounded-xl font-bold">Receipt</button>
+                
+                <div class="space-y-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="processTransaction('QUOTATION')" class="border border-purple-500 text-purple-400 py-2 rounded-lg hover:bg-purple-500/10 transition text-sm">Quotation</button>
+                        <button onclick="processTransaction('INVOICE')" class="border border-blue-500 text-blue-400 py-2 rounded-lg hover:bg-blue-500/10 transition text-sm">Invoice</button>
+                    </div>
+                    <button onclick="processTransaction('RECEIPT')" class="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg shadow-purple-500/20">
+                        CONFIRM & RECEIPT
+                    </button>
+                    <button onclick="cancelBill()" class="w-full text-gray-500 py-2 text-sm hover:text-red-400 transition">
+                        Cancel Transaction
+                    </button>
                 </div>
             </div>
         </div>
-
     </div>
 
-    <section class="mt-12 glass-card p-8">
-        <h2 class="text-xl mb-4">Add New Stock</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <input type="text" id="p-name" placeholder="Product Name" class="bg-black border border-gray-700 p-2 rounded">
-            <input type="number" id="p-price" placeholder="Price (RM)" class="bg-black border border-gray-700 p-2 rounded">
-            <input type="number" id="p-qty" placeholder="Initial Qty" class="bg-black border border-gray-700 p-2 rounded">
-            <button onclick="addNewProduct()" class="btn-primary rounded p-2">Upload Stock</button>
+    <section class="mt-12 glass-card p-8 border-t-4 border-purple-600">
+        <h2 class="text-xl font-bold mb-6 flex items-center">
+            <span class="bg-purple-600 w-2 h-6 mr-3 rounded"></span> Inventory Management
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <input type="text" id="p-name" placeholder="Product Name" class="bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500">
+            <input type="number" id="p-price" placeholder="Selling Price (RM)" class="bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500">
+            <input type="number" id="p-qty" placeholder="Current Stock" class="bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500">
+            <input type="file" id="p-img" class="text-xs text-gray-400 pt-2 cursor-pointer">
+        </div>
+        <textarea id="p-desc" placeholder="Product Description..." class="w-full mt-4 bg-[#0f0e17] border border-gray-800 p-3 rounded-xl focus:border-purple-500 h-20"></textarea>
+        <div class="mt-4 flex justify-end">
+            <button onclick="addNewProduct()" class="btn-primary px-10 py-3 rounded-xl font-bold">
+                Add to Stock
+            </button>
         </div>
     </section>
 
