@@ -68,77 +68,80 @@
         }
         
         .text-accent { color: var(--accent); }
+        .tab-btn { color: var(--text-muted); }
+        .active-tab { 
+            background: var(--accent-gradient); 
+            color: white !important; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .hidden { display: none; }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <header class="flex justify-between items-center mb-10">
+    <header class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-3xl font-bold gradient-text text-accent">KETICK4MICRO</h1>
-            <p class="text-xs" style="color: var(--text-muted)">Micro POS & Stock System</p>
+            <h1 class="text-2xl font-bold gradient-text text-accent">KETICK4MICRO</h1>
         </div>
-        
-        <div class="flex items-center gap-4">
-            <button onclick="toggleTheme()" class="glass-card p-3 hover:scale-110 transition shadow-lg">
-                <span id="theme-icon">🌙</span>
-            </button>
-            <div id="bill-display" class="glass-card px-6 py-3 text-sm">
-                Next No: <span id="next-bill-no" class="text-accent font-mono text-lg font-bold">#1001</span>
-            </div>
-        </div>
+        <button onclick="toggleTheme()" class="glass-card p-2 shadow-lg">
+            <span id="theme-icon">🌙</span>
+        </button>
     </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2">
-            <h2 class="text-xl mb-4 font-semibold flex items-center">
-                <span class="w-2 h-2 bg-accent rounded-full mr-2" style="background-color: var(--accent)"></span> 
-                Product Catalog
-            </h2>
-            <div id="catalog" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-        </div>
+    <nav class="flex gap-2 mb-6 bg-white/5 p-1 rounded-2xl glass-card">
+        <button onclick="switchTab('tab-catalog')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-sm transition active-tab" id="btn-catalog">Catalog</button>
+        <button onclick="switchTab('tab-pos')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-sm transition" id="btn-pos">POS & Bill</button>
+        <button onclick="switchTab('tab-inventory')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-sm transition" id="btn-inventory">Inventory</button>
+    </nav>
 
-        <div class="glass-card p-6 h-fit sticky top-8">
-            <h2 class="text-xl mb-4 font-semibold">Current Bill</h2>
-            <div id="cart-items" class="space-y-3 mb-6 min-h-[150px] max-h-[400px] overflow-y-auto"></div>
-            
-            <div class="border-t border-gray-800 pt-4">
-                <div class="flex justify-between mb-4">
-                    <span style="color: var(--text-muted)">Total Amount</span>
-                    <span id="total-price" class="font-bold text-2xl text-accent">RM 0.00</span>
+    <div id="tab-catalog" class="tab-content">
+        <div class="mb-4">
+            <input type="text" onkeyup="renderCatalog(this.value)" placeholder="Search product..." class="w-full p-3 rounded-xl glass-card border-none">
+        </div>
+        <div id="catalog-list" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+    </div>
+
+    <div id="tab-pos" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                <h2 class="text-lg mb-3 opacity-70">Quick Select</h2>
+                <div id="pos-select-list" class="grid grid-cols-3 md:grid-cols-4 gap-2"></div>
+            </div>
+            <div class="glass-card p-6 h-fit sticky top-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-sm">Current Bill</h2>
+                    <span class="text-accent font-mono font-bold" id="next-bill-no-display">#1001</span>
                 </div>
-                
+                <div id="cart-items" class="space-y-3 mb-6 min-h-[150px] max-h-[300px] overflow-y-auto border-b border-white/10 pb-4"></div>
+                <div class="flex justify-between mb-4 font-bold text-xl text-accent">
+                    <span>Total</span>
+                    <span id="total-price">RM 0.00</span>
+                </div>
                 <div class="space-y-2">
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="processTransaction('QUOTATION')" class="border border-accent text-accent py-2 rounded-lg hover:bg-accent/10 transition text-sm">Quotation</button>
-                        <button onclick="processTransaction('INVOICE')" class="border border-blue-500 text-blue-500 py-2 rounded-lg hover:bg-blue-500/10 transition text-sm">Invoice</button>
+                        <button onclick="processTransaction('QUOTATION')" class="border border-accent text-accent py-2 rounded-lg text-xs hover:bg-accent/10 transition">Quotation</button>
+                        <button onclick="processTransaction('INVOICE')" class="border border-blue-500 text-blue-500 py-2 rounded-lg text-xs hover:bg-blue-500/10 transition">Invoice</button>
                     </div>
-                    <button onclick="processTransaction('RECEIPT')" class="w-full btn-primary py-4 rounded-xl font-bold text-lg shadow-lg">
-                        CONFIRM & RECEIPT
-                    </button>
-                    <button onclick="cancelBill()" class="w-full text-sm hover:text-red-500 transition" style="color: var(--text-muted)">
-                        Cancel Transaction
-                    </button>
+                    <button onclick="processTransaction('RECEIPT')" class="w-full btn-primary py-4 rounded-xl font-bold shadow-lg">CONFIRM RECEIPT</button>
+                    <button onclick="cancelBill()" class="w-full text-xs opacity-50 py-2">Cancel Transaction</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <section class="mt-12 glass-card p-8 border-t-4" style="border-top-color: var(--accent)">
-        <h2 class="text-xl font-bold mb-6 flex items-center">
-            <span class="w-2 h-6 mr-3 rounded" style="background-color: var(--accent)"></span> 
-            Inventory Management
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <input type="text" id="p-name" placeholder="Product Name" class="p-3 rounded-xl">
-            <input type="number" id="p-price" placeholder="Price (RM)" class="p-3 rounded-xl">
-            <input type="number" id="p-qty" placeholder="Stock" class="p-3 rounded-xl">
-            <input type="file" id="p-img" class="text-xs pt-2 cursor-pointer">
+    <div id="tab-inventory" class="tab-content hidden">
+        <div class="glass-card p-6 mb-6">
+            <h2 class="font-bold mb-4">Add New Product</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="p-name" placeholder="Product Name" class="p-3 rounded-xl">
+                <input type="number" id="p-price" placeholder="Price (RM)" class="p-3 rounded-xl">
+                <input type="number" id="p-qty" placeholder="Initial Stock" class="p-3 rounded-xl">
+                <input type="file" id="p-img" class="text-xs pt-2 cursor-pointer">
+            </div>
+            <button onclick="addNewProduct()" class="w-full btn-primary mt-4 py-3 rounded-xl font-bold">Save to Inventory</button>
         </div>
-        <textarea id="p-desc" placeholder="Description..." class="w-full mt-4 p-3 rounded-xl h-20"></textarea>
-        <div class="mt-4 flex justify-end">
-            <button onclick="addNewProduct()" class="btn-primary px-10 py-3 rounded-xl font-bold">Add to Stock</button>
-        </div>
-    </section>
+        <div id="inventory-list" class="space-y-2"></div>
+    </div>
 
     <script src="app.js"></script>
 </body>
