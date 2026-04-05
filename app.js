@@ -1,3 +1,29 @@
+// --- LOGIK PWA INSTALLATION ---
+let deferredPrompt;
+const installBtn = document.getElementById('install-button');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installBtn) installBtn.classList.remove('hidden');
+});
+
+if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to install: ${outcome}`);
+        deferredPrompt = null;
+        installBtn.classList.add('hidden');
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    if (installBtn) installBtn.classList.add('hidden');
+    deferredPrompt = null;
+});
+
 // --- SISTEM TEMA ---
 if (localStorage.getItem('theme') === 'light') {
     document.documentElement.classList.add('light-mode');
@@ -24,7 +50,7 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab'));
     document.getElementById(tabId).classList.remove('hidden');
     const btnId = tabId.replace('tab-', 'btn-');
-    document.getElementById(btnId).classList.add('active-tab');
+    if(document.getElementById(btnId)) document.getElementById(btnId).classList.add('active-tab');
     renderAll(); 
 }
 
@@ -191,7 +217,7 @@ function renderCart() {
 function removeFromCart(i) { cart.splice(i, 1); renderCart(); }
 function cancelBill() { if (cart.length > 0 && confirm("Cancel?")) { cart = []; renderCart(); } }
 function saveData() { localStorage.setItem('ketick_products', JSON.stringify(products)); localStorage.setItem('ketick_bill_no', nextBillNo.toString()); }
-function updateBillDisplay() { document.getElementById('next-bill-no-display').innerText = `#${nextBillNo}`; }
+function updateBillDisplay() { if(document.getElementById('next-bill-no-display')) document.getElementById('next-bill-no-display').innerText = `#${nextBillNo}`; }
 function clearInputs() { document.querySelectorAll('input, textarea').forEach(i => i.value = ''); }
 
 renderAll();
