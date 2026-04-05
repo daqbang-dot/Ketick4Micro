@@ -59,6 +59,32 @@ function switchTab(tabId) {
     renderAll(); 
 }
 
+// --- SISTEM LANGGANAN (PRICING) ---
+function openPricing() {
+    document.getElementById('pricing-page').classList.remove('hidden');
+}
+
+function closePricing() {
+    document.getElementById('pricing-page').classList.add('hidden');
+}
+
+function subscribe(plan) {
+    let message = "";
+    if (plan === 'PRO') {
+        message = "Anda memilih Pakej PRO (Bulanan). Anda akan dibawa ke gerbang pembayaran.";
+    } else if (plan === 'PREMIUM') {
+        message = "Anda memilih Pakej PREMIUM (Tahunan). Anda akan dibawa ke gerbang pembayaran.";
+    } else if (plan === 'LEGEND') {
+        message = "Pilihan Bijak! Anda memilih Pakej LEGEND (Lifetime). Anda akan dibawa ke gerbang pembayaran.";
+    }
+    
+    alert(message);
+    
+    // const phone = "601XXXXXXXX"; 
+    // const text = `Hai, saya berminat untuk melanggan KETICK4MICRO Pakej ${plan}.`;
+    // window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
 // --- SISTEM BUSINESS SETTINGS ---
 let bizInfo = JSON.parse(localStorage.getItem('ketick_biz')) || {
     name: "KETICK BUSINESS",
@@ -276,7 +302,7 @@ function deleteProduct(id) {
 function addToCart(id) { 
     const p = products.find(p => p.id === id); 
     if (p.qty <= 0) return alert("Habis stok!"); 
-    cart.push({ ...p, cartId: Date.now() }); // Unique ID for cart item
+    cart.push({ ...p, cartId: Date.now() }); 
     renderCart(); 
 }
 
