@@ -7,7 +7,6 @@ if (localStorage.getItem('theme') === 'light') {
 function toggleTheme() {
     const html = document.documentElement;
     const icon = document.getElementById('theme-icon');
-
     if (html.classList.contains('light-mode')) {
         html.classList.remove('light-mode');
         icon.innerText = '🌙';
@@ -26,109 +25,62 @@ let products = JSON.parse(localStorage.getItem('ketick_products')) || [
 let nextBillNo = parseInt(localStorage.getItem('ketick_bill_no')) || 1001;
 let cart = [];
 
-// --- FUNGSI RENDER KATALOG ---
-function renderCatalog() {
-    const catalog = document.getElementById('catalog');
-    if (products.length === 0) {
-        catalog.innerHTML = `<p class="col-span-full italic opacity-50">No products available.</p>`;
-        return;
-    }
+// --- FUNGSI PENJANAAN PDF ---
+async function generatePDF(type, billNo, items, total) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const date = new Date().toLocaleString();
+    const isLight = document.documentElement.classList.contains('light-mode');
+    const accentColor = isLight ? [255, 83, 0] : [77, 48, 255];
+
+    doc.setFontSize(22);
+    doc.setTextColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.text("KETICK4MICRO", 14, 20);
     
-    catalog.innerHTML = products.map(p => `
-        <div class="glass-card p-4 flex flex-col items-center hover:border-accent transition">
-            <img src="${p.img}" class="w-full h-32 object-cover rounded-xl mb-3 shadow-inner bg-black/20">
-            <h3 class="font-bold text-sm w-full truncate text-center">${p.name}</h3>
-            <p class="text-accent font-bold">RM ${p.price.toFixed(2)}</p>
-            <p class="text-[10px] opacity-50 uppercase tracking-widest mt-1">Stock: ${p.qty}</p>
-            <button onclick="addToCart(${p.id})" class="mt-3 w-full py-2 bg-white/10 hover:bg-accent hover:text-white rounded-lg text-xs font-bold transition">
-                ADD TO BILL
-            </button>
-        </div>
-    `).join('');
-}
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Jenis Dokumen: ${type}`, 14, 30);
+    doc.text(`No. Rujukan: #${billNo}`, 14, 35);
+    doc.text(`Tarikh: ${date}`, 14, 40);
 
-// --- FUNGSI STOK ---
-function addNewProduct() {
-    const name = document.getElementById('p-name').value;
-    const price = parseFloat(document.getElementById('p-price').value);
-    const qty = parseInt(document.getElementById('p-qty').value);
-    const desc = document.getElementById('p-desc').value;
-    const imgInput = document.getElementById('p-img');
+    const tableData = items.map((item, index) => [
+        index + 1, item.name, `1`, `RM ${item.price.toFixed(2)}`, `RM ${item.price.toFixed(2)}`
+    ]);
 
-    if (!name || isNaN(price)) return alert("Sila isi Nama dan Harga!");
+    doc.autoTable({
+        startY: 50,
+        head: [['No', 'Produk', 'Qty', 'Unit Price', 'Total']],
+        body: tableData,
+        headStyles: { fillColor: accentColor },
+        theme: 'striped'
+    });
 
-    const processUpload = (imageSrc) => {
-        const newProduct = {
-            id: Date.now(),
-            name,
-            price,
-            qty: qty || 0,
-            desc: desc || "",
-            img: imageSrc
-        };
-        products.push(newProduct);
-        saveData();
-        renderCatalog();
-        clearInputs();
-    };
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12); doc.setTextColor(0); doc.setFont("helvetica", "bold");
+    doc.text(`TOTAL AMOUNT: RM ${total.toFixed(2)}`, 140, finalY);
 
-    if (imgInput.files && imgInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => processUpload(e.target.result);
-        reader.readAsDataURL(imgInput.files[0]);
-    } else {
-        processUpload("https://via.placeholder.com/150/4D30FF/FFFFFF?text=No+Image");
-    }
+    doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(150);
+    doc.text(type === 'QUOTATION' ? "* Valid for 30 days." : "* Thank you for your business.", 14, finalY + 20);
+
+    doc.save(`KETICK_${type}_${billNo}.pdf`);
 }
 
 // --- FUNGSI TRANSAKSI ---
-function addToCart(id) {
-    const product = products.find(p => p.id === id);
-    if (product.qty <= 0) return alert("Maaf, stok habis!");
-    cart.push({ ...product, cartId: Date.now() });
-    renderCart();
-}
-
-function renderCart() {
-    const container = document.getElementById('cart-items');
-    let total = 0;
-    
-    if (cart.length === 0) {
-        container.innerHTML = `<p class="opacity-50 text-sm italic text-center py-10">No items selected...</p>`;
-    } else {
-        container.innerHTML = cart.map((item, index) => {
-            total += item.price;
-            return `
-                <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
-                    <div>
-                        <p class="text-sm font-semibold">${item.name}</p>
-                        <p class="text-xs text-accent">RM ${item.price.toFixed(2)}</p>
-                    </div>
-                    <button onclick="removeFromCart(${index})" class="opacity-50 hover:text-red-500">×</button>
-                </div>
-            `;
-        }).join('');
-    }
-    document.getElementById('total-price').innerText = `RM ${total.toFixed(2)}`;
-}
-
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    renderCart();
-}
-
 function processTransaction(type) {
-    if (cart.length === 0) return alert("Sila tambah barang dahulu!");
+    if (cart.length === 0) return alert("Cart is empty!");
+    const total = cart.reduce((sum, item) => sum + item.price, 0);
+    const itemsCopy = [...cart];
+    const currentBill = nextBillNo;
 
     if (type === 'RECEIPT') {
         cart.forEach(item => {
             let p = products.find(prod => prod.id === item.id);
             if (p) p.qty -= 1; 
         });
-        alert(`RESIT #${nextBillNo} BERJAYA. Stok dikemaskini.`);
+        generatePDF('RECEIPT', currentBill, itemsCopy, total);
         nextBillNo++;
     } else {
-        alert(`${type} #${nextBillNo} dijana. Stok TIDAK ditolak.`);
+        generatePDF(type, currentBill, itemsCopy, total);
     }
 
     cart = [];
@@ -138,26 +90,60 @@ function processTransaction(type) {
     updateBillDisplay();
 }
 
-function cancelBill() {
-    if (cart.length > 0 && confirm("Batalkan transaksi? No #${nextBillNo} dikekalkan.")) {
-        cart = [];
-        renderCart();
-    }
+// --- FUNGSI PEMBANTU LAIN ---
+function renderCatalog() {
+    const catalog = document.getElementById('catalog');
+    if (products.length === 0) { catalog.innerHTML = `<p class="col-span-full italic opacity-50 text-center">No products available.</p>`; return; }
+    catalog.innerHTML = products.map(p => `
+        <div class="glass-card p-4 flex flex-col items-center hover:border-accent transition">
+            <img src="${p.img}" class="w-full h-32 object-cover rounded-xl mb-3 shadow-inner bg-black/20">
+            <h3 class="font-bold text-sm w-full truncate text-center">${p.name}</h3>
+            <p class="text-accent font-bold">RM ${p.price.toFixed(2)}</p>
+            <p class="text-[10px] opacity-50 mt-1">Stock: ${p.qty}</p>
+            <button onclick="addToCart(${p.id})" class="mt-3 w-full py-2 bg-white/10 hover:bg-accent hover:text-white rounded-lg text-xs font-bold transition">ADD</button>
+        </div>
+    `).join('');
 }
 
-function saveData() {
-    localStorage.setItem('ketick_products', JSON.stringify(products));
-    localStorage.setItem('ketick_bill_no', nextBillNo.toString());
+function addNewProduct() {
+    const name = document.getElementById('p-name').value;
+    const price = parseFloat(document.getElementById('p-price').value);
+    const qty = parseInt(document.getElementById('p-qty').value);
+    const imgInput = document.getElementById('p-img');
+    if (!name || isNaN(price)) return alert("Fill Name & Price!");
+    const process = (img) => {
+        products.push({ id: Date.now(), name, price, qty: qty || 0, img });
+        saveData(); renderCatalog(); clearInputs();
+    };
+    if (imgInput.files && imgInput.files[0]) {
+        const r = new FileReader(); r.onload = (e) => process(e.target.result); r.readAsDataURL(imgInput.files[0]);
+    } else process("https://via.placeholder.com/150/4D30FF/FFFFFF?text=Ketick");
 }
 
-function updateBillDisplay() {
-    document.getElementById('next-bill-no').innerText = `#${nextBillNo}`;
+function addToCart(id) {
+    const p = products.find(p => p.id === id);
+    if (p.qty <= 0) return alert("Out of stock!");
+    cart.push({ ...p }); renderCart();
 }
 
-function clearInputs() {
-    document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+function renderCart() {
+    const container = document.getElementById('cart-items');
+    let total = 0;
+    if (cart.length === 0) container.innerHTML = `<p class="opacity-50 text-sm italic text-center py-10">Empty...</p>`;
+    else container.innerHTML = cart.map((item, i) => {
+        total += item.price;
+        return `<div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+            <div><p class="text-sm font-semibold">${item.name}</p><p class="text-xs text-accent">RM ${item.price.toFixed(2)}</p></div>
+            <button onclick="removeFromCart(${i})" class="opacity-50 hover:text-red-500">×</button>
+        </div>`;
+    }).join('');
+    document.getElementById('total-price').innerText = `RM ${total.toFixed(2)}`;
 }
 
-// Jalankan
-renderCatalog();
-updateBillDisplay();
+function removeFromCart(i) { cart.splice(i, 1); renderCart(); }
+function cancelBill() { if (cart.length > 0 && confirm("Cancel?")) { cart = []; renderCart(); } }
+function saveData() { localStorage.setItem('ketick_products', JSON.stringify(products)); localStorage.setItem('ketick_bill_no', nextBillNo.toString()); }
+function updateBillDisplay() { document.getElementById('next-bill-no').innerText = `#${nextBillNo}`; }
+function clearInputs() { document.querySelectorAll('input, textarea').forEach(i => i.value = ''); }
+
+renderCatalog(); updateBillDisplay();
