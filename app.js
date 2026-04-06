@@ -59,7 +59,9 @@ function switchTab(tabId) {
     renderAll(); 
 }
 
-// --- SISTEM LANGGANAN (PRICING) ---
+// --- SISTEM STATUS PAKEJ & LANGGANAN (PRICING) ---
+let currentPlan = localStorage.getItem('ketick_plan') || 'BASIC';
+
 function openPricing() {
     document.getElementById('pricing-page').classList.remove('hidden');
 }
@@ -69,20 +71,20 @@ function closePricing() {
 }
 
 function subscribe(plan) {
-    let message = "";
-    if (plan === 'PRO') {
-        message = "Anda memilih Pakej PRO (Bulanan). Anda akan dibawa ke gerbang pembayaran.";
-    } else if (plan === 'PREMIUM') {
-        message = "Anda memilih Pakej PREMIUM (Tahunan). Anda akan dibawa ke gerbang pembayaran.";
-    } else if (plan === 'LEGEND') {
-        message = "Pilihan Bijak! Anda memilih Pakej LEGEND (Lifetime). Anda akan dibawa ke gerbang pembayaran.";
+    if (currentPlan === plan) {
+        return alert(`Anda sudah melanggan pakej ${plan}.`);
     }
+
+    // Ini simulasi pengaktifan pakej
+    let confirmUpgrade = confirm(`Adakah anda mahu naik taraf ke pakej ${plan}?\n\n(Ini adalah simulasi pengesahan pembayaran)`);
     
-    alert(message);
-    
-    // const phone = "601XXXXXXXX"; 
-    // const text = `Hai, saya berminat untuk melanggan KETICK4MICRO Pakej ${plan}.`;
-    // window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    if (confirmUpgrade) {
+        currentPlan = plan;
+        localStorage.setItem('ketick_plan', currentPlan);
+        alert(`Tahniah! Akaun anda telah dinaik taraf ke pakej ${plan}.`);
+        closePricing();
+        renderAll();
+    }
 }
 
 // --- SISTEM BUSINESS SETTINGS ---
@@ -112,6 +114,15 @@ function closeSettings() {
 }
 
 function previewLogo(input) {
+    // SEMAKAN PAKEJ: Logo hanya untuk PRO ke atas
+    if (currentPlan === 'BASIC') {
+        alert("Fungsi Logo Syarikat eksklusif untuk pakej PRO dan ke atas sahaja.");
+        input.value = ''; // Reset input fail
+        closeSettings();
+        openPricing();
+        return;
+    }
+
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -187,6 +198,13 @@ async function generatePDF(type, billNo, items, total) {
     doc.text(`Bank: ${bizInfo.bank} | Acc: ${bizInfo.accNo}`, 14, finalY + 6);
     doc.text(`Name: ${bizInfo.accName}`, 14, finalY + 11);
 
+    // --- LOGIK WATERMARK UNTUK PAKEJ BASIC ---
+    if (currentPlan === 'BASIC') {
+        doc.setFontSize(8);
+        doc.setTextColor(150, 0, 0); // Merah pudar
+        doc.text("Dijana secara percuma oleh KETICK4MICRO - Sila naik taraf", 105, 290, { align: 'center' });
+    }
+
     doc.save(`KETICK_${type}_${billNo}.pdf`);
 }
 
@@ -202,6 +220,20 @@ function processTransaction(type) {
             if (p) p.qty -= 1; 
         });
         generatePDF('RECEIPT', nextBillNo, itemsCopy, total);
+
+        // --- KELEBIHAN PAKEJ LEGEND: WHATSAPP AUTO ---
+        if (currentPlan === 'LEGEND') {
+            setTimeout(() => {
+                if (confirm("Resit berjaya dijana! Hantar butiran terus ke WhatsApp pelanggan?")) {
+                    let phoneNum = prompt("Sila masukkan nombor telefon pelanggan (Contoh: 60123456789):");
+                    if (phoneNum) {
+                        let text = `Terima kasih atas pembelian anda dari ${bizInfo.name}!\n\nNo Resit: #${nextBillNo}\nJumlah: RM${total.toFixed(2)}\n\nSila simpan PDF resit yang telah diberikan.`;
+                        window.open(`https://wa.me/${phoneNum}?text=${encodeURIComponent(text)}`, '_blank');
+                    }
+                }
+            }, 500); // Tunggu PDF selesai dijana sebelum prompt WhatsApp muncul
+        }
+        
         nextBillNo++;
     } else { 
         generatePDF(type, nextBillNo, itemsCopy, total); 
@@ -267,6 +299,13 @@ function renderInventory() {
 }
 
 function addNewProduct() {
+    // SEMAKAN PAKEJ: Had 5 produk untuk Basic
+    if (currentPlan === 'BASIC' && products.length >= 5) {
+        alert("Had maksimum 5 produk dicapai untuk Pakej Basic.\nSila naik taraf ke Pro/Premium/Legend untuk produk tanpa had.");
+        openPricing();
+        return;
+    }
+
     const name = document.getElementById('p-name').value;
     const price = parseFloat(document.getElementById('p-price').value);
     const qty = parseInt(document.getElementById('p-qty').value);
