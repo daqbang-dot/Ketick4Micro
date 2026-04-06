@@ -1,0 +1,21 @@
+{
+  "name": "KETICK4MICRO",
+  "short_name": "KETICK",
+  "description": "Sistem POS, Inventori & ERP Mikro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#020107",
+  "theme_color": "#5B7BFE",
+  "icons": [
+    {
+      "src": "icon-001.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-001.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
