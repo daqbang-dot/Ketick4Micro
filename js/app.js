@@ -224,25 +224,62 @@ window.createNewKupon = function() {
     refreshAllUI();
 };
 
-// --- FUNGSI WA BLAST ---
-window.startWABlast = async function() {
+// --- FUNGSI WA BLAST (SEMI-AUTO) ---
+window.startWABlast = function() {
+    if(!currentPlanConfig.enableWABlast) return alert("Pakej anda tidak menyokong WA Blast.");
+    
+    const message = document.getElementById('blast-msg').value;
+    if(!message) return alert("Sila masukkan mesej.");
+
+    const queue = WABlastModule.generateBlastLinks(message);
+    if(queue.length === 0) return alert("Tiada sasaran yang sah (Semua pelanggan mungkin berada di dalam senarai Jail atau tiada rekod pelanggan).");
+
+    alert(`Sistem KETICK telah menyusun ${queue.length} pautan selamat. Sila klik butang yang dijana satu per satu.`);
+
+    const display = document.getElementById('blast-status-display');
+    display.innerHTML = `
+        <div class="max-h-60 overflow-y-auto space-y-2 text-left mt-4 border-t border-white/10 pt-4">
+            ${queue.map((q, i) => `
+                <a href="${q.link}" target="_blank" onclick="this.classList.replace('bg-green-600', 'bg-gray-700'); this.classList.add('opacity-50'); this.innerText = '✅ SELESAI: ${q.name}';" class="block bg-green-600 p-3 rounded-xl text-[10px] font-bold text-center text-white shadow-lg transition">
+                    🚀 HANTAR ${i+1}: ${q.name}
+                </a>
+            `).join('')}
+        </div>
+        <button onclick="document.getElementById('blast-status-display').innerHTML=''" class="w-full text-[8px] text-red-400 mt-4 border border-red-500/30 p-2 rounded-xl">TUTUP SENARAI</button>
+    `;
+};
+
+// --- FUNGSI WA BLAST (TURBO EXTENSION FULL-AUTO) ---
+window.startTurboBlast = async function() {
     if(!currentPlanConfig.enableWABlast) return alert("Pakej anda tidak menyokong WA Blast.");
     
     const message = document.getElementById('blast-msg').value;
     const delay = parseInt(document.getElementById('blast-delay').value);
     
     if(!message) return alert("Sila masukkan mesej.");
-    if(delay < 30) return alert("Delay minimum adalah 30 saat untuk keselamatan.");
+    if(delay < 15) return alert("Untuk TURBO, delay minimum 15 saat diperlukan supaya WhatsApp Web sempat sedia.");
 
-    if(confirm(`Mula hantar mesej ke semua pelanggan (Kecuali senarai Jail)? Delay: ${delay}s setiap mesej.`)) {
-        await WABlastModule.processBlast(message, delay, (current, total, name) => {
+    const queue = WABlastModule.generateTurboLinks(message);
+    if(queue.length === 0) return alert("Tiada sasaran.");
+
+    if(confirm(`AMARAN: KETICK akan membuka & menutup tab automatik untuk ${queue.length} pelanggan. Pastikan 'KETICK Turbo Blast' Extension aktif di Kiwi Browser (Desktop Mode). Teruskan?`)) {
+        
+        for (let i = 0; i < queue.length; i++) {
+            const task = queue[i];
+            
             document.getElementById('blast-status-display').innerHTML = `
-                <div class="animate-pulse text-green-400 font-bold">Sedang Menghantar: ${current}/${total}</div>
-                <p class="text-[10px] opacity-50">Sila jangan tutup tab ini. Seterusnya: ${name}</p>
+                <div class="animate-bounce text-yellow-400 font-bold mt-3">🚀 TURBO AKTIF: ${i+1}/${queue.length}</div>
+                <p class="text-[10px] opacity-70">Menghantar ke: ${task.name}</p>
+                <p class="text-[8px] text-red-500 italic">Jangan tutup tab/browser KETICK ini.</p>
             `;
-        });
-        alert("Blast selesai!");
-        document.getElementById('blast-status-display').innerHTML = "Blast selesai sepenuhnya.";
+
+            window.open(task.link, '_blank');
+
+            await new Promise(resolve => setTimeout(resolve, delay * 1000));
+        }
+
+        alert("Misi Turbo Blast Selesai!");
+        document.getElementById('blast-status-display').innerHTML = "✅ Semua mesej Turbo telah dihantar.";
         refreshAllUI();
     }
 };
@@ -253,6 +290,7 @@ window.toggleJail = function(phone) {
     refreshAllUI();
 };
 
+// --- FUNGSI POS & TRANSAKSI ---
 window.processTransaction = function(type, printMethod = 'PDF') {
     if (POSModule.cart.length === 0) return alert("Troli kosong!");
 
@@ -288,7 +326,7 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     const currentBill = POSModule.nextBillNo;
 
     if (paymentMethod === 'HUTANG') {
-        if (!currentPlanConfig.enableBuku555) return alert("Pakej anda tidak menyokong fungsi Buku 555. Sila tukar kaedah bayaran.");
+        if (!currentPlanConfig.enableBuku555) return alert("Pakej anda tidak menyokong fungsi Buku 555.");
         if (type !== 'RECEIPT') return alert("Hutang hanya direkodkan menggunakan JANA RESIT MUKTAMAD.");
         Buku555Module.addDebt(customer, total, currentBill);
         alert(`Berjaya direkodkan ke Buku 555 atas nama ${customer.name}`);
