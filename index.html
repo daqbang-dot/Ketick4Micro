@@ -24,6 +24,16 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW failed', err));
+            });
+        }
+    </script>
 </head>
 <body class="p-4 mx-auto max-w-lg">
     
@@ -45,6 +55,7 @@
                 <h2 class="text-xl font-bold text-purple-400">Business Settings</h2>
                 <button onclick="closeSettings()" class="text-2xl opacity-50 hover:opacity-100 transition">✕</button>
             </div>
+            
             <div class="space-y-4 pb-20">
                 <div class="bg-white/5 p-6 rounded-3xl border border-dashed border-white/10 text-center">
                     <img id="logo-preview" src="https://via.placeholder.com/100" class="h-20 mx-auto mb-4 object-contain">
@@ -80,6 +91,27 @@
 
         <div id="tab-dash" class="tab-content hidden pb-10">
             <div id="dashboard-container"></div>
+            
+            <div class="bg-white/5 border border-white/10 p-5 rounded-3xl mt-6 shadow-lg">
+                <h2 class="text-xs font-bold mb-4 opacity-70 uppercase tracking-widest text-yellow-500">Cipta Kupon Diskaun</h2>
+                <form id="kupon-form" class="space-y-3" onsubmit="event.preventDefault(); createNewKupon();">
+                    <input type="text" id="kp-code" placeholder="Kod (cth: RAYA5)" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-xs outline-none uppercase font-mono">
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="kp-type" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-xs outline-none text-white">
+                            <option value="PERCENT" class="bg-gray-900">Peratus (%)</option>
+                            <option value="FIXED" class="bg-gray-900">Tetap (RM)</option>
+                        </select>
+                        <input type="number" id="kp-value" placeholder="Nilai (Amt/%)" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-xs outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="kp-min" placeholder="Min. Belanja (RM)" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-xs outline-none">
+                        <input type="number" id="kp-qty" placeholder="Had Kuantiti" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-xs outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-bold text-[10px] transition">SIMPAN KUPON</button>
+                </form>
+                <h3 class="text-[10px] font-bold mt-6 mb-3 opacity-50 uppercase tracking-widest">Senarai Kupon Aktif</h3>
+                <div id="kupon-manager-list" class="space-y-2"></div>
+            </div>
         </div>
 
         <div id="tab-crm" class="tab-content hidden pb-10">
@@ -114,11 +146,11 @@
                 <div class="bg-gradient-to-br from-purple-900/40 to-black p-5 w-full rounded-3xl border border-purple-500/30 shadow-2xl">
                     <div class="mb-4 space-y-2 border-b border-white/10 pb-4">
                         <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest">Tetapan Transaksi</p>
-                        <select id="pos-payment-method" class="bg-black/60 border border-white/10 p-3 rounded-xl w-full text-xs font-bold outline-none appearance-none">
-                            <option value="TUNAI">💵 PEMBAYARAN: TUNAI</option>
-                            <option value="QR PAY">📱 PEMBAYARAN: QR PAY</option>
-                            <option value="TRANSFER">🏦 PEMBAYARAN: TRANSFER</option>
-                            <option value="HUTANG">📖 MASUK BUKU 555 (HUTANG)</option>
+                        <select id="pos-payment-method" class="bg-black/60 border border-white/10 p-3 rounded-xl w-full text-xs font-bold outline-none text-white">
+                            <option value="TUNAI" class="bg-gray-900">💵 PEMBAYARAN: TUNAI</option>
+                            <option value="QR PAY" class="bg-gray-900">📱 PEMBAYARAN: QR PAY</option>
+                            <option value="TRANSFER" class="bg-gray-900">🏦 PEMBAYARAN: TRANSFER</option>
+                            <option value="HUTANG" class="bg-gray-900">📖 MASUK BUKU 555 (HUTANG)</option>
                         </select>
                         <div class="flex gap-2">
                             <input type="text" id="pos-kupon" placeholder="Kod Kupon Diskaun" class="bg-black/60 border border-white/10 p-3 rounded-xl w-[70%] text-xs outline-none uppercase font-mono">
