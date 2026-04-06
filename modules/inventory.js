@@ -1,78 +1,60 @@
-// Modul Inventory - Menguruskan Data & UI Stok
 export const InventoryModule = {
-    // Ambil data dari LocalStorage
-    getProducts: () => {
-        return JSON.parse(localStorage.getItem('ketick_products')) || [];
-    },
+    getProducts: () => JSON.parse(localStorage.getItem('ketick_inventory')) || [],
+    saveProducts: (products) => localStorage.setItem('ketick_inventory', JSON.stringify(products)),
 
-    // Simpan data ke LocalStorage
-    saveProducts: (products) => {
-        localStorage.setItem('ketick_products', JSON.stringify(products));
-    },
-
-    // Tambah Produk Baru dengan semakan had pelan
-    addProduct: (formData, planConfig, callback) => {
+    addProduct: (productData, planConfig, onSuccess) => {
         const products = InventoryModule.getProducts();
-
-        // Semak had produk berdasarkan pelan
-        if (products.length >= planConfig.maxProducts) {
-            alert(`Had produk dicapai! Pelan ${planConfig.planName} hanya membenarkan ${planConfig.maxProducts} produk.`);
-            return false;
+        
+        if (!planConfig.canAddUnlimitedProducts && products.length >= planConfig.maxProducts) {
+            alert(`Pakej ${planConfig.planName} hanya membenarkan maksimum ${planConfig.maxProducts} produk. Sila naik taraf pakej.`);
+            return;
         }
 
         const newProduct = {
             id: Date.now(),
-            name: formData.name,
-            price: parseFloat(formData.price),
-            qty: parseInt(formData.qty),
-            img: formData.img || "https://via.placeholder.com/150/4D30FF/FFFFFF?text=No+Image"
+            name: productData.name,
+            desc: productData.desc || '', // Tambahan Description
+            price: parseFloat(productData.price),
+            qty: parseInt(productData.qty),
+            img: productData.img || 'https://via.placeholder.com/150'
         };
 
         products.push(newProduct);
         InventoryModule.saveProducts(products);
-        if (callback) callback();
-        return true;
+        onSuccess();
     },
 
-    // Hapus Produk
-    deleteProduct: (id, callback) => {
+    deleteProduct: (id) => {
         let products = InventoryModule.getProducts();
         products = products.filter(p => p.id !== id);
         InventoryModule.saveProducts(products);
-        if (callback) callback();
     },
 
-    // Render Senarai Inventory ke HTML
     renderList: (containerId) => {
         const container = document.getElementById(containerId);
-        const products = InventoryModule.getProducts();
+        if (!container) return;
 
+        const products = InventoryModule.getProducts();
         if (products.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 opacity-30 text-xs italic">Tiada produk dalam inventory.</div>`;
+            container.innerHTML = `<div class="text-center py-10 opacity-30 text-xs italic">Tiada produk. Sila tambah stok.</div>`;
             return;
         }
 
         container.innerHTML = products.map(p => `
-            <div class="bg-white/5 border border-white/5 p-3 rounded-2xl flex justify-between items-center mb-2">
-                <div class="flex items-center gap-3 w-4/5">
-                    <img src="${p.img}" class="w-10 h-10 rounded-lg object-cover bg-black">
-                    <div class="truncate">
-                        <p class="font-bold text-xs truncate">${p.name}</p>
-                        <p class="text-[10px] opacity-50">RM ${p.price.toFixed(2)} | Stok: ${p.qty}</p>
-                    </div>
+            <div class="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-2xl flex gap-4 items-center mb-3 shadow-sm dark:shadow-none transition-all">
+                <img src="${p.img}" class="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-white/10">
+                <div class="flex-1">
+                    <h3 class="font-bold text-sm text-slate-800 dark:text-white">${p.name}</h3>
+                    ${p.desc ? `<p class="text-[9px] text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-1">${p.desc}</p>` : ''}
+                    <div class="text-xs text-blue-600 dark:text-purple-400 font-bold mt-1">RM ${p.price.toFixed(2)}</div>
                 </div>
-                <button class="delete-btn text-red-500 bg-red-500/10 w-8 h-8 rounded-full flex items-center justify-center text-xs" data-id="${p.id}">✕</button>
+                <div class="text-center">
+                    <div class="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-3 py-1 rounded-lg ${p.qty <= 5 ? 'text-red-500' : 'text-slate-700 dark:text-white'}">
+                        ${p.qty} unit
+                    </div>
+                    <button onclick="if(confirm('Padam produk ini?')){ InventoryModule.deleteProduct(${p.id}); refreshAllUI(); }" class="text-[10px] text-red-500 mt-2 opacity-70 hover:opacity-100">Padam</button>
+                </div>
             </div>
         `).join('');
-
-        // Attach event listener secara dinamik untuk butang hapus
-        container.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.onclick = () => {
-                const id = parseInt(btn.getAttribute('data-id'));
-                if(confirm("Hapus produk ini?")) {
-                    InventoryModule.deleteProduct(id, () => InventoryModule.renderList(containerId));
-                }
-            };
-        });
     }
 };
