@@ -1,50 +1,52 @@
 export const KuponModule = {
-    getKupons: () => JSON.parse(localStorage.getItem('ketick_kupons')) || [],
+    getKupons: () => JSON.parse(localStorage.getItem('ketick_kupon')) || [],
+    saveKupons: (data) => localStorage.setItem('ketick_kupon', JSON.stringify(data)),
     
-    saveKupons: (kupons) => {
-        localStorage.setItem('ketick_kupons', JSON.stringify(kupons));
-    },
-
-    // Tauke tambah kupon baru
     addKupon: (data) => {
-        const kupons = KuponModule.getKupons();
-        const newKupon = {
-            id: Date.now(),
-            code: data.code.toUpperCase(),
-            type: data.type, // 'PERCENT' atau 'FIXED'
-            value: parseFloat(data.value),
-            minSpend: parseFloat(data.minSpend),
-            qty: parseInt(data.qty), // Stok kupon
+        const k = KuponModule.getKupons();
+        k.push({
+            id: Date.now(), 
+            code: data.code.toUpperCase(), 
+            type: data.type, 
+            value: parseFloat(data.value), 
+            minSpend: parseFloat(data.minSpend), 
+            qty: parseInt(data.qty), 
             used: 0
-        };
-        kupons.push(newKupon);
-        KuponModule.saveKupons(kupons);
+        });
+        KuponModule.saveKupons(k);
     },
 
-    // Semak kupon semasa POS
-    verifyKupon: (code, cartTotal) => {
-        const kupons = KuponModule.getKupons();
-        const kupon = kupons.find(k => k.code === code.toUpperCase());
-        
-        if (!kupon) return { valid: false, msg: "Kod kupon tidak wujud." };
-        if (kupon.qty <= 0) return { valid: false, msg: "Kupon ini telah habis ditebus." };
-        if (cartTotal < kupon.minSpend) return { valid: false, msg: `Minimum belanja RM${kupon.minSpend} diperlukan.` };
-        
-        let discountAmt = kupon.type === 'PERCENT' ? (cartTotal * (kupon.value / 100)) : kupon.value;
-        return { valid: true, discount: discountAmt, detail: kupon };
+    updateKupon: (id, data) => {
+        let k = KuponModule.getKupons();
+        let idx = k.findIndex(x => x.id === id);
+        if(idx > -1) {
+            k[idx] = { ...k[idx], ...data, value: parseFloat(data.value), minSpend: parseFloat(data.minSpend), qty: parseInt(data.qty) };
+            KuponModule.saveKupons(k);
+        }
     },
 
-    // Tolak kuantiti bila transaksi berjaya
+    deleteKupon: (id) => {
+        let k = KuponModule.getKupons();
+        KuponModule.saveKupons(k.filter(x => x.id !== id));
+    },
+
+    verifyKupon: (code, subtotal) => {
+        const k = KuponModule.getKupons().find(x => x.code === code.toUpperCase());
+        if(!k) return {valid: false, msg: "Kupon tidak wujud."};
+        if(k.qty <= 0) return {valid: false, msg: "Kupon telah habis ditebus."};
+        if(subtotal < k.minSpend) return {valid: false, msg: `Syarat tidak sah! Belanja minimum ialah RM${k.minSpend.toFixed(2)}.`};
+        
+        let disc = k.type === 'PERCENT' ? subtotal * (k.value/100) : k.value;
+        return {valid: true, discount: disc, kupon: k};
+    },
+
     decrementKupon: (code) => {
-        if (!code) return;
-        const kupons = KuponModule.getKupons();
-        const index = kupons.findIndex(k => k.code === code.toUpperCase());
-        
-        if (index !== -1 && kupons[index].qty > 0) {
-            kupons[index].qty -= 1;
-            kupons[index].used += 1;
-            KuponModule.saveKupons(kupons);
-            console.log(`[KUPON] ${code} ditolak. Baki: ${kupons[index].qty}`);
+        let k = KuponModule.getKupons();
+        let target = k.find(x => x.code === code.toUpperCase());
+        if(target && target.qty > 0) { 
+            target.qty -= 1; 
+            target.used += 1; 
+            KuponModule.saveKupons(k); 
         }
     }
 };
