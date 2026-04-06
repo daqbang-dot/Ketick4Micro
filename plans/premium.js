@@ -2,7 +2,7 @@ export const Premium = {
     planName: 'PREMIUM',
     maxProducts: 100,
     canUploadLogo: true,
-    hasWatermark: true,
+    hasWatermark: false,
     enableWhatsAppReceipt: true,
     enableSalesReports: true,
     // MODUL BARU
