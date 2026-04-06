@@ -5,6 +5,7 @@ import { Premium } from '../plans/premium.js';
 import { LegendPlan } from '../plans/legend.js';
 import { initDevTools } from './dev-tools.js';
 
+// Modul Teras
 import { InventoryModule } from '../modules/inventory.js';
 import { POSModule } from '../modules/pos.js';
 import { BillingModule } from '../modules/billing.js';
@@ -12,6 +13,8 @@ import { SettingsModule } from '../modules/settings.js';
 import { DashboardModule } from '../modules/dashboard.js'; 
 import { SyncModule } from '../modules/sync.js'; 
 import { HistoryModule } from '../modules/history.js';
+
+// Modul Baharu
 import { CRMModule } from '../modules/crm.js';
 import { KuponModule } from '../modules/kupon.js';
 import { Buku555Module } from '../modules/buku555.js';
@@ -217,7 +220,7 @@ window.editInventory = function(id) {
     const p = InventoryModule.getProducts().find(x => x.id === id);
     if(p) {
         document.getElementById('p-name').value = p.name;
-        document.getElementById('p-desc').value = p.desc;
+        document.getElementById('p-desc').value = p.desc || '';
         document.getElementById('p-price').value = p.price;
         document.getElementById('p-qty').value = p.qty;
         window.editingProductId = p.id;
@@ -336,10 +339,23 @@ window.cancelBill = () => { if(confirm("Batal transaksi?")) { POSModule.clearCar
 // --- LAIN-LAIN ---
 window.filterHistory = () => HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value);
 window.toggleJail = (p) => { WABlastModule.addToJail(p); refreshAllUI(); };
+
 window.addManualCustomer = () => { 
     const n = document.getElementById('crm-manual-name').value;
     const p = document.getElementById('crm-manual-phone').value;
     if(n && p) { CRMModule.saveCustomer(n, p); refreshAllUI(); }
+};
+
+// Fungsi Baru Import Telefon (Guna Web Contact API)
+window.importPhoneContacts = async () => {
+    alert("Menyemak buku telefon... Sila benarkan akses jika diminta.");
+    const result = await CRMModule.importFromContacts();
+    if(result.success) {
+        alert(`Berjaya import ${result.count} pelanggan!`);
+        refreshAllUI();
+    } else {
+        alert(result.msg);
+    }
 };
 
 window.createNewKupon = () => {
@@ -395,7 +411,6 @@ window.startTurboBlast = async function() {
         for (let i = 0; i < queue.length; i++) { window.open(queue[i].link, '_blank'); await new Promise(r => setTimeout(r, delay * 1000)); }
     }
 };
-window.importPhoneContacts = () => { document.getElementById('xls-upload').click(); alert("Fungsi ini kini digabungkan dengan butang Excel/CSV untuk kestabilan PWA.") };
 
 function setupEventListeners() {
     const form = document.getElementById('add-product-form');
