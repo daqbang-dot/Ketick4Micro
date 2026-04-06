@@ -16,7 +16,7 @@ export const POSModule = {
         const customer = CRMModule.searchCustomer(phone);
         if (customer) {
             POSModule.currentCustomer = customer;
-            document.getElementById(nameInputId).value = customer.name; // Auto-fill
+            document.getElementById(nameInputId).value = customer.name; 
             return true;
         }
         POSModule.currentCustomer = null;
@@ -32,7 +32,7 @@ export const POSModule = {
         const result = KuponModule.verifyKupon(code, total);
         if(result.valid) {
             POSModule.currentDiscount = result.discount;
-            POSModule.appliedKupon = code;
+            POSModule.appliedKupon = code.toUpperCase();
             alert(`Kupon disahkan! Diskaun RM${result.discount.toFixed(2)}`);
             POSModule.renderCart('cart-items', 'total-price');
         } else {
@@ -110,6 +110,20 @@ export const POSModule = {
             });
         }
         
+        // --- LOGIK BARU: SEMAK SEMULA KUPON SECARA REAL-TIME ---
+        if (POSModule.appliedKupon) {
+            const check = KuponModule.verifyKupon(POSModule.appliedKupon, subtotal);
+            if (!check.valid) {
+                POSModule.appliedKupon = null;
+                POSModule.currentDiscount = 0;
+                // Gunakan setTimeout supaya UI render dulu sebelum keluar alert
+                setTimeout(() => alert(`Kupon ditarik balik: ${check.msg}`), 100); 
+            } else {
+                POSModule.currentDiscount = check.discount;
+            }
+        }
+        // --------------------------------------------------------
+
         let grandTotal = subtotal - POSModule.currentDiscount;
         if(grandTotal < 0) grandTotal = 0;
         
