@@ -1,7 +1,7 @@
 import { AuthModule } from './firebase-auth.js';
 import { BasicPlan } from '../plans/basic.js';
 import { ProPlan } from '../plans/pro.js';
-import { Premium } from '../plans/premium.js'; // <--- IMPORT PREMIUM DI SINI
+import { Premium } from '../plans/premium.js';
 import { LegendPlan } from '../plans/legend.js';
 import { initDevTools } from './dev-tools.js';
 
@@ -54,10 +54,9 @@ function initApp() {
     }
 }
 
-// --- LOGIK KENAL PASTI PELAN (KEMASKINI) ---
 function setPlan(planName) {
     if (planName === 'LEGEND') currentPlanConfig = LegendPlan;
-    else if (planName === 'PREMIUM') currentPlanConfig = Premium; // <--- LOGIK PREMIUM
+    else if (planName === 'PREMIUM') currentPlanConfig = Premium;
     else if (planName === 'PRO') currentPlanConfig = ProPlan;
     else currentPlanConfig = BasicPlan;
 
@@ -307,6 +306,7 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         BillingModule.generatePDF(type, currentBill, itemsCopy, total, discount, customer, paymentMethod, currentPlanConfig);
     }
     
+    // Reset Data POS
     POSModule.incrementBillNo();
     POSModule.clearCart();
     document.getElementById('pos-phone').value = '';
@@ -378,5 +378,57 @@ function setupEventListeners() {
         };
     }
 }
+
+// --- FUNGSI TAMBAHAN UNTUK CRM UI ---
+window.addManualCustomer = function() {
+    if(!currentPlanConfig.enableCRM) return alert("Pakej anda tidak menyokong modul CRM.");
+    
+    const name = document.getElementById('crm-manual-name').value;
+    const phone = document.getElementById('crm-manual-phone').value;
+    
+    if(!name || !phone) return alert("Sila masukkan nama dan nombor telefon.");
+    
+    const result = CRMModule.saveCustomer(name, phone);
+    if(result.success) {
+        alert("Pelanggan berjaya disimpan!");
+        document.getElementById('crm-manual-name').value = '';
+        document.getElementById('crm-manual-phone').value = '';
+        refreshAllUI();
+        SyncModule.uploadData();
+    } else {
+        alert(result.msg);
+    }
+};
+
+window.importPhoneContacts = async function() {
+    if(!currentPlanConfig.enableCRM) return alert("Pakej anda tidak menyokong modul CRM.");
+    
+    const result = await CRMModule.importFromContacts();
+    if(result.success) {
+        alert(`Berjaya import ${result.count} nombor dari kenalan telefon anda!`);
+        refreshAllUI();
+        SyncModule.uploadData();
+    } else {
+        alert(result.msg);
+    }
+};
+
+window.handleExcelUpload = function(input) {
+    if(!currentPlanConfig.enableCRM) return alert("Pakej anda tidak menyokong modul CRM.");
+    
+    if (input.files && input.files[0]) {
+        alert("Sedang memproses fail Excel/CSV...");
+        CRMModule.importFromExcel(input.files[0], (result) => {
+            if(result.success) {
+                alert(`Selesai! Berjaya import ${result.count} pelanggan dari fail.`);
+                refreshAllUI();
+                SyncModule.uploadData();
+            } else {
+                alert(`Ralat: ${result.msg}`);
+            }
+            input.value = ''; // Reset input fail
+        });
+    }
+};
 
 window.onload = initApp;
