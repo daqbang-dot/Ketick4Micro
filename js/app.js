@@ -5,7 +5,6 @@ import { Premium } from '../plans/premium.js';
 import { LegendPlan } from '../plans/legend.js';
 import { initDevTools } from './dev-tools.js';
 
-// Modul Teras
 import { InventoryModule } from '../modules/inventory.js';
 import { POSModule } from '../modules/pos.js';
 import { BillingModule } from '../modules/billing.js';
@@ -13,8 +12,6 @@ import { SettingsModule } from '../modules/settings.js';
 import { DashboardModule } from '../modules/dashboard.js'; 
 import { SyncModule } from '../modules/sync.js'; 
 import { HistoryModule } from '../modules/history.js';
-
-// Modul Baharu
 import { CRMModule } from '../modules/crm.js';
 import { KuponModule } from '../modules/kupon.js';
 import { Buku555Module } from '../modules/buku555.js';
@@ -26,10 +23,29 @@ let currentPlanConfig = BasicPlan;
 let currentUser = null;
 let isDevMode = true; 
 
+// --- ENJIN PENGECIL GAMBAR (PENYELESAI MASALAH MEMORI) ---
+// Tukar gambar 5MB jadi 50KB supaya localStorage tak muntah
+function compressImage(file, callback) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = event => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400; // Kecilkan saiz
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            callback(canvas.toDataURL('image/jpeg', 0.5)); // 50% kualiti
+        }
+    };
+}
+
 function initApp() {
     console.log(`[KETICK4MICRO] Sistem bermula.`);
-    
-    // Inisialisasi Tema (Dark/Light)
     const savedTheme = localStorage.getItem('ketick_theme');
     if (savedTheme === 'light') { document.documentElement.classList.remove('dark'); } 
     else { document.documentElement.classList.add('dark'); }
@@ -37,29 +53,23 @@ function initApp() {
     AuthModule.onStatusChange(async (user) => {
         if (user) {
             currentUser = user;
-            const planName = await AuthModule.getUserPlan(user.uid);
-            setPlan(planName);
+            setPlan(await AuthModule.getUserPlan(user.uid));
             updateAuthUI(user);
         } else {
             currentUser = null;
             setPlan('BASIC');
             updateAuthUI(null);
         }
-        
-        const billDisplay = document.getElementById('next-bill-no-display');
-        if(billDisplay) billDisplay.innerText = `#${POSModule.nextBillNo}`;
+        document.getElementById('next-bill-no-display').innerText = `#${POSModule.nextBillNo}`;
         refreshAllUI();
     });
-    
     setupEventListeners();
     if(isDevMode) setTimeout(() => initDevTools(currentPlanConfig), 500); 
 }
 
-// --- TEMA & PLAN ---
 window.toggleTheme = function() {
     document.documentElement.classList.toggle('dark');
-    const isDark = document.documentElement.classList.contains('dark');
-    localStorage.setItem('ketick_theme', isDark ? 'dark' : 'light');
+    localStorage.setItem('ketick_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 };
 
 function setPlan(planName) {
@@ -67,9 +77,7 @@ function setPlan(planName) {
     else if (planName === 'PREMIUM') currentPlanConfig = Premium;
     else if (planName === 'PRO') currentPlanConfig = ProPlan;
     else currentPlanConfig = BasicPlan;
-
-    const authStatus = document.getElementById('auth-status');
-    if (authStatus) authStatus.innerText = `${currentPlanConfig.planName} MODE`;
+    document.getElementById('auth-status').innerText = `${currentPlanConfig.planName} MODE`;
 }
 
 function updateAuthUI(user) {
@@ -79,21 +87,50 @@ function updateAuthUI(user) {
     btn.onclick = () => user ? AuthModule.logout() : AuthModule.login();
 }
 
-// --- PENGURUSAN TAB ---
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab', 'text-white', 'text-slate-800'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.add('opacity-50', 'text-slate-500'));
-    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active-tab', 'text-white', 'text-slate-800');
+        btn.classList.add('opacity-50', 'text-slate-500');
+    });
     document.getElementById(tabId).classList.remove('hidden');
     const btnId = tabId.replace('tab-', 'btn-');
     if(document.getElementById(btnId)) {
         document.getElementById(btnId).classList.add('active-tab', 'text-white');
-        document.getElementById(btnId).classList.remove('opacity-50');
+        document.getElementById(btnId).classList.remove('opacity-50', 'text-slate-500');
     }
     refreshAllUI();
 };
 
+window.openSettings = function() {
+    document.getElementById('settings-page').classList.remove('hidden');
+    SettingsModule.loadToForm();
+};
+window.closeSettings = function() { document.getElementById('settings-page').classList.add('hidden'); };
+window.saveSettings = function() {
+    SettingsModule.saveBizInfo({
+        name: document.getElementById('biz-name').value,
+        address: document.getElementById('biz-address').value,
+        phone: document.getElementById('biz-phone').value,
+        bank: document.getElementById('biz-bank').value,
+        accNo: document.getElementById('biz-acc-no').value,
+        accName: document.getElementById('biz-acc-name').value,
+        logo: document.getElementById('logo-preview').src 
+    });
+    alert("Tetapan disimpan!");
+    window.closeSettings();
+    SyncModule.uploadData(); 
+};
+window.previewLogo = function(input) {
+    if (!currentPlanConfig.canUploadLogo) return alert("Pakej tak sokong logo.");
+    if (input.files && input.files[0]) {
+        compressImage(input.files[0], (compressedData) => {
+            document.getElementById('logo-preview').src = compressedData;
+        });
+    }
+};
+
+// --- REFRESH SEMUA UI & RENDER ---
 function refreshAllUI() {
     InventoryModule.renderList('inventory-list');
     POSModule.renderPOSSelect('pos-select-list');
@@ -106,109 +143,35 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
-// --- SETTINGS ---
-window.openSettings = function() {
-    const modal = document.getElementById('settings-page');
-    if (modal) {
-        modal.classList.remove('hidden');
-        SettingsModule.loadToForm();
-    }
-};
-
-window.closeSettings = function() {
-    const modal = document.getElementById('settings-page');
-    if (modal) modal.classList.add('hidden');
-};
-
-window.saveSettings = function() {
-    const data = {
-        name: document.getElementById('biz-name').value,
-        address: document.getElementById('biz-address').value,
-        phone: document.getElementById('biz-phone').value,
-        bank: document.getElementById('biz-bank').value,
-        accNo: document.getElementById('biz-acc-no').value,
-        accName: document.getElementById('biz-acc-name').value,
-        logo: document.getElementById('logo-preview').src 
-    };
-    SettingsModule.saveBizInfo(data);
-    alert("Tetapan berjaya disimpan!");
-    window.closeSettings();
-    SyncModule.uploadData(); 
-};
-
-window.previewLogo = function(input) {
-    if (!currentPlanConfig.canUploadLogo) return alert("Pakej anda tidak menyokong muat naik logo.");
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => { document.getElementById('logo-preview').src = e.target.result; };
-        reader.readAsDataURL(input.files[0]);
-    }
-};
-
-// --- MODUL LHDN / PERBELANJAAN ---
+// --- RENDERING MODULES DENGAN BUTANG EDIT ---
 function renderLHDNExpenses() {
     const container = document.getElementById('lhdn-expenses-list');
     if(!container) return;
     const expenses = LHDNModule.getExpenses();
-    if(expenses.length === 0) return container.innerHTML = `<div class="text-xs text-center opacity-50 py-4">Tiada rekod perbelanjaan.</div>`;
-
+    if(expenses.length === 0) return container.innerHTML = `<div class="text-xs text-center opacity-50 py-4">Tiada rekod.</div>`;
     container.innerHTML = expenses.map(e => `
         <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10 mb-2 shadow-sm flex justify-between items-center">
             <div class="flex gap-3 items-center">
-                ${e.img ? `<img src="${e.img}" class="w-10 h-10 rounded-lg object-cover cursor-pointer" onclick="window.open('${e.img}', '_blank')">` : `<div class="w-10 h-10 bg-slate-100 dark:bg-black/50 rounded-lg flex items-center justify-center text-[8px] opacity-50">Tiada Resit</div>`}
-                <div>
-                    <div class="font-bold text-xs text-slate-800 dark:text-white">${e.desc}</div>
-                    <div class="text-[9px] opacity-60">${e.category} | ${e.date.split(',')[0]}</div>
-                </div>
+                ${e.img ? `<img src="${e.img}" class="w-10 h-10 rounded-lg object-cover">` : `<div class="w-10 h-10 bg-slate-100 flex items-center justify-center text-[8px] opacity-50">Tiada</div>`}
+                <div><div class="font-bold text-xs">${e.desc}</div><div class="text-[9px] opacity-60">${e.category}</div></div>
             </div>
             <div class="text-right">
                 <div class="font-bold text-sm text-red-500">-RM${e.amount.toFixed(2)}</div>
-                <button onclick="deleteExpense(${e.id})" class="text-[8px] text-slate-400 hover:text-red-500 mt-1">Padam</button>
+                <button onclick="deleteExpense(${e.id})" class="text-[8px] text-slate-400 hover:text-red-500">Padam</button>
             </div>
         </div>
     `).join('');
 }
 
-window.deleteExpense = (id) => { if(confirm("Padam?")) { LHDNModule.deleteExpense(id); refreshAllUI(); } };
-
-window.saveNewExpense = function() {
-    const desc = document.getElementById('exp-desc').value;
-    const amount = document.getElementById('exp-amount').value;
-    const cat = document.getElementById('exp-cat').value;
-    const imgInput = document.getElementById('exp-img');
-    if(!desc || !amount) return alert("Sila isi butiran.");
-
-    const processSave = (imgData = null) => {
-        LHDNModule.saveExpense(desc, amount, cat, imgData);
-        alert("Perbelanjaan direkodkan!");
-        document.getElementById('lhdn-expense-form').reset();
-        refreshAllUI();
-    };
-    if (imgInput.files && imgInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => processSave(e.target.result);
-        reader.readAsDataURL(imgInput.files[0]);
-    } else { processSave(); }
-};
-
-window.generateTaxReport = (type) => {
-    if(!currentPlanConfig.enableLHDN) return alert("Pakej Legend diperlukan.");
-    const val = (type === 'MONTH') ? prompt("Bulan (MM-YYYY):", "04-2026") : prompt("Tahun (YYYY):", "2026");
-    if(val) LHDNModule.downloadTaxReport(type, val);
-};
-
-window.generateEInvoiceJSON = (billNo) => LHDNModule.generateEInvoiceJSON(billNo);
-
-// --- CRM & KUPON UI ---
 function renderCRM() {
     const container = document.getElementById('crm-list');
-    if(!container || !currentPlanConfig.enableCRM) return;
+    if(!container) return;
     const customers = CRMModule.getCustomers();
     container.innerHTML = customers.map(c => `
         <div class="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-2xl flex justify-between items-center mb-2">
             <div><div class="font-bold text-xs">${c.name}</div><div class="text-[10px] text-blue-600 dark:text-purple-400 font-mono">${c.phone}</div></div>
-            <div class="text-right">
-                <div class="text-[10px] opacity-70">Pts: ${c.points || 0}</div>
+            <div class="text-right flex items-center gap-2">
+                <button onclick="editCustomer(${c.id}, '${c.name}', '${c.phone}')" class="text-[10px] bg-slate-100 dark:bg-white/10 px-2 py-1 rounded">Edit</button>
                 <button onclick="toggleJail('${c.phone}')" class="text-[8px] text-red-500">STOP</button>
             </div>
         </div>
@@ -217,38 +180,92 @@ function renderCRM() {
 
 function renderBuku555() {
     const container = document.getElementById('buku555-list');
-    if(!container || !currentPlanConfig.enableBuku555) return;
+    if(!container) return;
     const debts = Buku555Module.getDebts();
     container.innerHTML = debts.map(d => `
         <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-2xl border border-red-100 dark:border-red-500/20 flex justify-between items-center mb-2">
-            <div><div class="font-bold text-xs text-red-600">${d.name}</div><div class="text-[9px] opacity-70">Bil: #${d.billNo}</div></div>
-            <div class="font-bold text-sm text-red-700 dark:text-white">RM ${d.amount.toFixed(2)}</div>
+            <div><div class="font-bold text-xs text-red-600">${d.name}</div><div class="text-[9px] opacity-70">Bil #${d.billNo} | ${d.date}</div></div>
+            <div class="text-right">
+                <div class="font-bold text-sm text-red-700 dark:text-white mb-1">RM ${d.amount.toFixed(2)}</div>
+                <button onclick="payBuku555(${d.id}, ${d.amount})" class="text-[8px] bg-green-500 text-white px-2 py-1 rounded font-bold uppercase">Bayar</button>
+            </div>
         </div>
     `).join('');
 }
 
 function renderKuponManager() {
     const container = document.getElementById('kupon-manager-list');
-    if(!container || !currentPlanConfig.enableKupon) return;
+    if(!container) return;
     const kupons = KuponModule.getKupons();
     container.innerHTML = kupons.map(k => `
         <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center mb-2 shadow-sm">
-            <div><div class="font-bold text-xs text-blue-600">${k.code}</div><div class="text-[9px] opacity-60">RM ${k.value} | Min: RM${k.minSpend}</div></div>
-            <div class="text-[10px] font-bold text-green-600">${k.qty} baki</div>
+            <div><div class="font-bold text-xs text-blue-600">${k.code}</div><div class="text-[9px] opacity-60">RM/Pct: ${k.value} | Min: RM${k.minSpend}</div></div>
+            <div class="text-right flex flex-col items-end gap-1">
+                <div class="text-[10px] font-bold text-green-600">${k.qty} baki</div>
+                <div class="flex gap-2">
+                    <button onclick="editKupon(${k.id})" class="text-[8px] bg-slate-200 dark:bg-white/10 px-2 rounded">Edit</button>
+                    <button onclick="KuponModule.deleteKupon(${k.id}); refreshAllUI();" class="text-[8px] text-red-500">Padam</button>
+                </div>
+            </div>
         </div>
     `).join('');
 }
 
-// --- POS & TRANSAKSI ---
+// --- FUNGSI EDIT / DELETE BARU ---
+window.editingProductId = null;
+window.editInventory = function(id) {
+    const p = InventoryModule.getProducts().find(x => x.id === id);
+    if(p) {
+        document.getElementById('p-name').value = p.name;
+        document.getElementById('p-desc').value = p.desc;
+        document.getElementById('p-price').value = p.price;
+        document.getElementById('p-qty').value = p.qty;
+        window.editingProductId = p.id;
+        document.getElementById('btn-save-inv').innerText = "KEMASKINI DATA";
+        window.scrollTo(0,0);
+    }
+};
+
+window.editingKuponId = null;
+window.editKupon = function(id) {
+    const k = KuponModule.getKupons().find(x => x.id === id);
+    if(k) {
+        document.getElementById('kp-code').value = k.code;
+        document.getElementById('kp-type').value = k.type;
+        document.getElementById('kp-value').value = k.value;
+        document.getElementById('kp-min').value = k.minSpend;
+        document.getElementById('kp-qty').value = k.qty;
+        window.editingKuponId = k.id;
+        document.getElementById('btn-save-kupon').innerText = "KEMASKINI KUPON";
+    }
+};
+
+window.editCustomer = function(id, oldName, oldPhone) {
+    const newName = prompt("Kemaskini Nama:", oldName);
+    const newPhone = prompt("Kemaskini No Telefon:", oldPhone);
+    if(newName && newPhone) { CRMModule.updateCustomerDetails(id, newName, newPhone); refreshAllUI(); }
+};
+
+window.payBuku555 = function(id, currentAmount) {
+    const amt = prompt(`Baki hutang: RM${currentAmount.toFixed(2)}\nMasukkan jumlah bayaran:`);
+    if(amt && !isNaN(amt)) {
+        Buku555Module.payDebt(id, amt);
+        alert("Bayaran direkodkan!");
+        refreshAllUI();
+    }
+};
+
+// --- POS & TRANSAKSI (Logik Dibaiki) ---
+window.applyKupon = () => {
+    const code = document.getElementById('pos-kupon').value;
+    if(code) POSModule.applyKupon(code);
+    refreshAllUI();
+};
+
 window.searchCustomer = function() {
     const phone = document.getElementById('pos-phone').value;
     if(!phone) return alert("Sila masukkan no telefon.");
     if(!POSModule.setCustomerByPhone(phone, 'pos-name')) alert("Pelanggan baru.");
-};
-
-window.applyKupon = () => {
-    const code = document.getElementById('pos-kupon').value;
-    if(code) POSModule.applyKupon(code);
 };
 
 window.processTransaction = function(type, printMethod = 'PDF') {
@@ -263,6 +280,17 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     if (!crmResult.success) return alert(crmResult.msg);
 
     let subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
+
+    // Verify balik kupon masa tekan bayar (Takut user buang item dari troli)
+    if (POSModule.appliedKupon) {
+        const check = KuponModule.verifyKupon(POSModule.appliedKupon, subtotal);
+        if(!check.valid) {
+            POSModule.appliedKupon = null; POSModule.currentDiscount = 0; refreshAllUI();
+            return alert(`Kupon Batal: ${check.msg}`);
+        }
+        POSModule.currentDiscount = check.discount;
+    }
+
     let total = subtotal - (POSModule.currentDiscount || 0);
     if(total < 0) total = 0;
 
@@ -276,9 +304,12 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         type: type
     };
 
-    if (payMethod === 'HUTANG') Buku555Module.addDebt(crmResult.customer, total, trx.billNo);
+    if (payMethod === 'HUTANG' && type === 'RECEIPT') Buku555Module.addDebt(crmResult.customer, total, trx.billNo);
+    
+    // Simpan ke sejarah untuk SEMUA jenis
     HistoryModule.saveTransaction(trx);
 
+    // TOLAK STOK & KUPON HANYA JIKA RESIT (Bukan Quotation/Invoice)
     if (type === 'RECEIPT') {
         let prods = InventoryModule.getProducts();
         POSModule.cart.forEach(item => { let p = prods.find(x => x.id === item.id); if(p && p.qty > 0) p.qty--; });
@@ -293,45 +324,78 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     POSModule.clearCart();
     document.getElementById('pos-phone').value = '';
     document.getElementById('pos-name').value = '';
+    document.getElementById('pos-kupon').value = '';
+    POSModule.appliedKupon = null;
+    POSModule.currentDiscount = 0;
     refreshAllUI();
     SyncModule.uploadData();
 };
 
-// --- WA BLAST ---
-window.startWABlast = function() {
-    const msg = document.getElementById('blast-msg').value;
-    if(!msg) return alert("Isi mesej.");
-    const queue = WABlastModule.generateBlastLinks(msg);
-    const display = document.getElementById('blast-status-display');
-    display.innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white text-center">HANTAR ${i+1}: ${q.name}</a>`).join('');
-};
+window.cancelBill = () => { if(confirm("Batal transaksi?")) { POSModule.clearCart(); refreshAllUI(); } };
 
-window.startTurboBlast = async function() {
-    const msg = document.getElementById('blast-msg').value;
-    const delay = parseInt(document.getElementById('blast-delay').value);
-    const queue = WABlastModule.generateTurboLinks(msg);
-    if(confirm(`Mula Turbo Blast untuk ${queue.length} orang?`)) {
-        for (let i = 0; i < queue.length; i++) {
-            window.open(queue[i].link, '_blank');
-            await new Promise(r => setTimeout(r, delay * 1000));
-        }
-    }
-};
-
-// --- UTILITIES ---
+// --- LAIN-LAIN ---
 window.filterHistory = () => HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value);
-window.cancelBill = () => { if(confirm("Batal transaksi?")) POSModule.clearCart(); };
 window.toggleJail = (p) => { WABlastModule.addToJail(p); refreshAllUI(); };
 window.addManualCustomer = () => { 
     const n = document.getElementById('crm-manual-name').value;
     const p = document.getElementById('crm-manual-phone').value;
     if(n && p) { CRMModule.saveCustomer(n, p); refreshAllUI(); }
 };
+
 window.createNewKupon = () => {
     const data = { code: document.getElementById('kp-code').value, type: document.getElementById('kp-type').value, value: document.getElementById('kp-value').value, minSpend: document.getElementById('kp-min').value, qty: document.getElementById('kp-qty').value };
-    KuponModule.addKupon(data);
+    if(window.editingKuponId) {
+        KuponModule.updateKupon(window.editingKuponId, data);
+        window.editingKuponId = null;
+        document.getElementById('btn-save-kupon').innerText = "SIMPAN KUPON";
+    } else {
+        KuponModule.addKupon(data);
+    }
+    document.getElementById('kupon-form').reset();
     refreshAllUI();
 };
+
+window.deleteExpense = (id) => { if(confirm("Padam?")) { LHDNModule.deleteExpense(id); refreshAllUI(); } };
+window.saveNewExpense = function() {
+    const desc = document.getElementById('exp-desc').value;
+    const amount = document.getElementById('exp-amount').value;
+    const cat = document.getElementById('exp-cat').value;
+    const imgInput = document.getElementById('exp-img');
+    if(!desc || !amount) return alert("Sila isi butiran.");
+
+    const processSave = (imgData = null) => {
+        LHDNModule.saveExpense(desc, amount, cat, imgData);
+        alert("Perbelanjaan direkodkan!");
+        document.getElementById('lhdn-expense-form').reset();
+        refreshAllUI();
+    };
+    if (imgInput.files && imgInput.files[0]) {
+        compressImage(imgInput.files[0], processSave);
+    } else { processSave(); }
+};
+
+window.generateTaxReport = (type) => {
+    const val = (type === 'MONTH') ? prompt("Bulan (MM-YYYY):", "04-2026") : prompt("Tahun (YYYY):", "2026");
+    if(val) LHDNModule.downloadTaxReport(type, val);
+};
+window.generateEInvoiceJSON = (billNo) => LHDNModule.generateEInvoiceJSON(billNo);
+
+// WA BLAST
+window.startWABlast = function() {
+    const msg = document.getElementById('blast-msg').value;
+    if(!msg) return alert("Isi mesej.");
+    const queue = WABlastModule.generateBlastLinks(msg);
+    document.getElementById('blast-status-display').innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white">HANTAR ${i+1}: ${q.name}</a>`).join('');
+};
+window.startTurboBlast = async function() {
+    const msg = document.getElementById('blast-msg').value;
+    const delay = parseInt(document.getElementById('blast-delay').value);
+    const queue = WABlastModule.generateTurboLinks(msg);
+    if(confirm(`Mula Turbo Blast untuk ${queue.length} orang?`)) {
+        for (let i = 0; i < queue.length; i++) { window.open(queue[i].link, '_blank'); await new Promise(r => setTimeout(r, delay * 1000)); }
+    }
+};
+window.importPhoneContacts = () => { document.getElementById('xls-upload').click(); alert("Fungsi ini kini digabungkan dengan butang Excel/CSV untuk kestabilan PWA.") };
 
 function setupEventListeners() {
     const form = document.getElementById('add-product-form');
@@ -343,9 +407,36 @@ function setupEventListeners() {
                 desc: document.getElementById('p-desc').value,
                 price: document.getElementById('p-price').value,
                 qty: document.getElementById('p-qty').value,
-                img: "" 
+                img: "https://via.placeholder.com/150" // Fallback asal
             };
-            InventoryModule.addProduct(formData, currentPlanConfig, () => { refreshAllUI(); form.reset(); });
+            
+            const fileInput = document.getElementById('p-img');
+            const processAdd = (imgData) => {
+                formData.img = imgData;
+                if(window.editingProductId) {
+                    let prods = InventoryModule.getProducts();
+                    let idx = prods.findIndex(x => x.id === window.editingProductId);
+                    if(idx > -1) { prods[idx] = {...prods[idx], ...formData}; InventoryModule.saveProducts(prods); }
+                    window.editingProductId = null;
+                    document.getElementById('btn-save-inv').innerText = "SIMPAN DATA";
+                    alert("Produk dikemaskini!");
+                } else {
+                    InventoryModule.addProduct(formData, currentPlanConfig, () => { alert("Produk Ditambah!"); });
+                }
+                form.reset(); refreshAllUI();
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                compressImage(fileInput.files[0], processAdd);
+            } else {
+                // Kekalkan imej lama jika sedang edit dan tak upload baru
+                if(window.editingProductId) {
+                    const oldP = InventoryModule.getProducts().find(x => x.id === window.editingProductId);
+                    processAdd(oldP ? oldP.img : formData.img);
+                } else {
+                    processAdd(formData.img);
+                }
+            }
         };
     }
 }
