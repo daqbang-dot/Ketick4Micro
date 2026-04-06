@@ -1,6 +1,7 @@
 import { AuthModule } from './firebase-auth.js';
 import { BasicPlan } from '../plans/basic.js';
 import { ProPlan } from '../plans/pro.js';
+import { Premium } from '../plans/premium.js'; // <--- IMPORT PREMIUM DI SINI
 import { LegendPlan } from '../plans/legend.js';
 import { initDevTools } from './dev-tools.js';
 
@@ -53,8 +54,10 @@ function initApp() {
     }
 }
 
+// --- LOGIK KENAL PASTI PELAN (KEMASKINI) ---
 function setPlan(planName) {
     if (planName === 'LEGEND') currentPlanConfig = LegendPlan;
+    else if (planName === 'PREMIUM') currentPlanConfig = Premium; // <--- LOGIK PREMIUM
     else if (planName === 'PRO') currentPlanConfig = ProPlan;
     else currentPlanConfig = BasicPlan;
 
@@ -146,6 +149,11 @@ function renderKuponManager() {
     const container = document.getElementById('kupon-manager-list');
     if(!container) return;
     
+    if(!currentPlanConfig.enableKupon) {
+        container.innerHTML = `<div class="opacity-50 text-xs text-center py-10">🔒 Pakej anda tidak menyokong Modul Kupon.</div>`;
+        return;
+    }
+
     const kupons = KuponModule.getKupons();
     if(kupons.length === 0) {
         container.innerHTML = `<div class="text-[10px] opacity-30 italic">Tiada kupon dicipta.</div>`;
@@ -211,7 +219,7 @@ window.createNewKupon = function() {
 };
 
 window.triggerWABlast = function() {
-    if(!currentPlanConfig.enableWABlast) return alert("Fungsi WA Blast eksklusif untuk pelan LEGEND.");
+    if(!currentPlanConfig.enableWABlast) return alert("Fungsi WA Blast dikunci untuk pelan ini.");
     const msg = prompt("Masukkan mesej promosi. Gunakan [NAMA] untuk letak nama pelanggan:", "Hi [NAMA], kami ada promosi istimewa hari ini!");
     if(!msg) return;
     
@@ -243,17 +251,15 @@ window.processTransaction = function(type, printMethod = 'PDF') {
 
     const subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
 
-    // --- LOGIK BARU: SEMAKAN KETAT TERAKHIR SEBELUM TRANSAKSI ---
     if (POSModule.appliedKupon) {
         const check = KuponModule.verifyKupon(POSModule.appliedKupon, subtotal);
         if (!check.valid) {
             POSModule.appliedKupon = null;
             POSModule.currentDiscount = 0;
-            refreshAllUI(); // Refresh UI untuk buang diskaun di skrin
+            refreshAllUI(); 
             return alert(`Transaksi ditahan! Kupon tidak melepasi syarat: ${check.msg}`);
         }
     }
-    // -------------------------------------------------------------
 
     let discount = POSModule.currentDiscount || 0;
     let total = subtotal - discount;
@@ -289,7 +295,6 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         });
         InventoryModule.saveProducts(products); 
 
-        // Tolak kuantiti kupon 
         if (POSModule.appliedKupon) {
             KuponModule.decrementKupon(POSModule.appliedKupon);
         }
@@ -302,7 +307,6 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         BillingModule.generatePDF(type, currentBill, itemsCopy, total, discount, customer, paymentMethod, currentPlanConfig);
     }
     
-    // Reset Data POS
     POSModule.incrementBillNo();
     POSModule.clearCart();
     document.getElementById('pos-phone').value = '';
