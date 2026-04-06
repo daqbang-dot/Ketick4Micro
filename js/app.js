@@ -238,12 +238,23 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     }
 
     const crmResult = CRMModule.saveCustomer(nameInput, phoneInput);
-    if (!crmResult.success) {
-        return alert(crmResult.msg); 
-    }
+    if (!crmResult.success) return alert(crmResult.msg); 
     const customer = crmResult.customer;
 
     const subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
+
+    // --- LOGIK BARU: SEMAKAN KETAT TERAKHIR SEBELUM TRANSAKSI ---
+    if (POSModule.appliedKupon) {
+        const check = KuponModule.verifyKupon(POSModule.appliedKupon, subtotal);
+        if (!check.valid) {
+            POSModule.appliedKupon = null;
+            POSModule.currentDiscount = 0;
+            refreshAllUI(); // Refresh UI untuk buang diskaun di skrin
+            return alert(`Transaksi ditahan! Kupon tidak melepasi syarat: ${check.msg}`);
+        }
+    }
+    // -------------------------------------------------------------
+
     let discount = POSModule.currentDiscount || 0;
     let total = subtotal - discount;
     if(total < 0) total = 0;
@@ -253,7 +264,7 @@ window.processTransaction = function(type, printMethod = 'PDF') {
 
     if (paymentMethod === 'HUTANG') {
         if (!currentPlanConfig.enableBuku555) return alert("Pakej anda tidak menyokong fungsi Buku 555. Sila tukar kaedah bayaran.");
-        if (type !== 'RECEIPT') return alert("Hutang hanya boleh direkodkan menggunakan JANA RESIT MUKTAMAD.");
+        if (type !== 'RECEIPT') return alert("Hutang hanya direkodkan menggunakan JANA RESIT MUKTAMAD.");
         Buku555Module.addDebt(customer, total, currentBill);
         alert(`Berjaya direkodkan ke Buku 555 atas nama ${customer.name}`);
     }
@@ -278,7 +289,7 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         });
         InventoryModule.saveProducts(products); 
 
-        // Tolak kuantiti kupon jika digunakan
+        // Tolak kuantiti kupon 
         if (POSModule.appliedKupon) {
             KuponModule.decrementKupon(POSModule.appliedKupon);
         }
