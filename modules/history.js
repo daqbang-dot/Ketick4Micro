@@ -1,61 +1,88 @@
-import { BillingModule } from './billing.js';
-
 export const HistoryModule = {
-    // Ambil data sejarah jualan
-    getHistory: () => {
-        return JSON.parse(localStorage.getItem('ketick_history')) || [];
-    },
+    getHistory: () => JSON.parse(localStorage.getItem('ketick_history')) || [],
 
-    // Simpan rekod transaksi baru
-    saveTransaction: (transaction) => {
+    // Kumpul data ikut bulan (Untuk Monthly Report)
+    getMonthlySummary: () => {
         const history = HistoryModule.getHistory();
-        history.unshift(transaction); // Masukkan di kedudukan paling atas (terkini)
-        
-        // Simpan maksimum 100 rekod terakhir (untuk jimatkan memori telefon)
-        if(history.length > 100) history.pop(); 
-        
-        localStorage.setItem('ketick_history', JSON.stringify(history));
+        const summary = {};
+
+        history.forEach(trx => {
+            const date = new Date(trx.date);
+            const key = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+            
+            if (!summary[key]) {
+                summary[key] = { totalSales: 0, count: 0, transactions: [] };
+            }
+            summary[key].totalSales += trx.total;
+            summary[key].count += 1;
+            summary[key].transactions.push(trx);
+        });
+        return summary;
     },
 
-    // Render paparan sejarah
-    render: (containerId, planConfig) => {
+    // Fungsi carian yang fleksibel
+    search: (query) => {
+        const history = HistoryModule.getHistory();
+        const q = query.toLowerCase();
+        return history.filter(h => 
+            h.customer?.name.toLowerCase().includes(q) || 
+            h.customer?.phone.includes(q) || 
+            h.billNo.toString().includes(q) ||
+            h.date.includes(q)
+        );
+    },
+
+    render: (containerId, planConfig, searchQuery = "") => {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        const history = HistoryModule.getHistory();
+        const history = searchQuery ? HistoryModule.search(searchQuery) : HistoryModule.getHistory();
+        const monthlySummary = HistoryModule.getMonthlySummary();
 
         if (history.length === 0) {
-            container.innerHTML = `<div class="text-center py-20 opacity-30 text-xs italic">Tiada rekod jualan setakat ini.</div>`;
+            container.innerHTML = `<div class="text-center py-10 opacity-30 text-xs italic">Tiada rekod ditemui.</div>`;
             return;
         }
 
-        container.innerHTML = history.map(h => `
+        // Paparan UI mengikut kategori Bulan
+        let html = '';
+        
+        // Render Monthly Report Summary (Jika tiada carian)
+        if (!searchQuery) {
+            html += `<div class="grid grid-cols-2 gap-2 mb-6">`;
+            for (const month in monthlySummary) {
+                html += `
+                <div class="bg-purple-900/20 border border-purple-500/30 p-3 rounded-2xl text-center">
+                    <p class="text-[8px] opacity-60 uppercase">${month}</p>
+                    <p class="text-xs font-bold">RM ${monthlySummary[month].totalSales.toFixed(2)}</p>
+                    <p class="text-[7px] opacity-40">${monthlySummary[month].count} Transaksi</p>
+                </div>`;
+            }
+            html += `</div>`;
+        }
+
+        // Render Senarai Transaksi
+        html += history.map(h => `
             <div class="bg-white/5 border border-white/10 p-4 rounded-3xl mb-3 shadow-lg">
-                <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-3">
+                <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-2">
                     <div>
-                        <span class="text-xs font-bold ${h.type === 'RECEIPT' ? 'text-green-400' : 'text-purple-400'}">#${h.billNo} (${h.type})</span>
-                        <div class="text-[9px] opacity-50 mt-1">${h.date}</div>
+                        <span class="text-xs font-bold text-white">#${h.billNo}</span>
+                        <span class="text-[8px] bg-white/10 px-2 py-0.5 rounded-full ml-2">${h.type}</span>
                     </div>
-                    <span class="text-lg font-bold text-white">RM ${h.total.toFixed(2)}</span>
+                    <span class="text-sm font-bold text-purple-400">RM ${h.total.toFixed(2)}</span>
                 </div>
-                <div class="text-[10px] opacity-70 mb-4 line-clamp-2 leading-relaxed">
-                    ${h.items.map(i => `${i.name} (x1)`).join(', ')}
+                <div class="flex justify-between items-center text-[10px]">
+                    <div class="opacity-70">
+                        <p class="font-bold">${h.customer ? h.customer.name : 'Walk-in'}</p>
+                        <p class="text-[8px] opacity-50">${h.date}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[8px] opacity-50 uppercase">${h.paymentMethod}</p>
+                    </div>
                 </div>
-                <button class="w-full border border-white/20 hover:bg-white/10 py-3 rounded-xl text-[10px] font-bold transition reprint-btn" data-bill="${h.billNo}">
-                    📄 CETAK SEMULA / SHARE
-                </button>
             </div>
         `).join('');
 
-        // Aktifkan butang cetak semula
-        container.querySelectorAll('.reprint-btn').forEach(btn => {
-            btn.onclick = () => {
-                const billNo = parseInt(btn.getAttribute('data-bill'));
-                const record = history.find(h => h.billNo === billNo);
-                if(record) {
-                    BillingModule.generatePDF(record.type, record.billNo, record.items, record.total, planConfig);
-                }
-            };
-        });
+        container.innerHTML = html;
     }
 };
