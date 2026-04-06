@@ -13,7 +13,7 @@ import { DashboardModule } from '../modules/dashboard.js';
 import { SyncModule } from '../modules/sync.js'; 
 import { HistoryModule } from '../modules/history.js';
 
-// Modul Baharu (Pakej Premium/Legend)
+// Modul Baharu
 import { CRMModule } from '../modules/crm.js';
 import { KuponModule } from '../modules/kupon.js';
 import { Buku555Module } from '../modules/buku555.js';
@@ -142,6 +142,30 @@ function renderBuku555() {
     `).join('');
 }
 
+function renderKuponManager() {
+    const container = document.getElementById('kupon-manager-list');
+    if(!container) return;
+    
+    const kupons = KuponModule.getKupons();
+    if(kupons.length === 0) {
+        container.innerHTML = `<div class="text-[10px] opacity-30 italic">Tiada kupon dicipta.</div>`;
+        return;
+    }
+
+    container.innerHTML = kupons.map(k => `
+        <div class="bg-white/5 p-3 rounded-xl border border-white/5 flex justify-between items-center mb-2">
+            <div>
+                <div class="font-bold text-xs text-yellow-500">${k.code}</div>
+                <div class="text-[9px] opacity-50">${k.type === 'PERCENT' ? k.value+'%' : 'RM'+k.value} | Min: RM${k.minSpend}</div>
+            </div>
+            <div class="text-right flex flex-col items-end">
+                <div class="text-[10px] font-bold ${k.qty > 0 ? 'text-green-400' : 'text-red-400'}">${k.qty} baki</div>
+                <div class="text-[8px] opacity-40 uppercase">Guna: ${k.used}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
 function refreshAllUI() {
     InventoryModule.renderList('inventory-list');
     POSModule.renderPOSSelect('pos-select-list');
@@ -150,6 +174,7 @@ function refreshAllUI() {
     HistoryModule.render('history-list', currentPlanConfig); 
     renderCRM();
     renderBuku555();
+    renderKuponManager();
 }
 
 // --- HELPER TRANSAKSI & POS ---
@@ -165,6 +190,24 @@ window.applyKupon = function() {
     const code = document.getElementById('pos-kupon').value;
     if(!code) return;
     POSModule.applyKupon(code);
+};
+
+window.createNewKupon = function() {
+    if(!currentPlanConfig.enableKupon) return alert("Sila naik taraf pakej untuk mencipta kupon.");
+    const data = {
+        code: document.getElementById('kp-code').value,
+        type: document.getElementById('kp-type').value,
+        value: document.getElementById('kp-value').value,
+        minSpend: document.getElementById('kp-min').value,
+        qty: document.getElementById('kp-qty').value
+    };
+
+    if(!data.code || !data.value || !data.qty || !data.minSpend) return alert("Sila lengkapkan semua maklumat kupon.");
+    
+    KuponModule.addKupon(data);
+    alert("Kupon berjaya dicipta!");
+    document.getElementById('kupon-form').reset();
+    refreshAllUI();
 };
 
 window.triggerWABlast = function() {
@@ -190,19 +233,16 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     const nameInput = document.getElementById('pos-name').value;
     const paymentMethod = document.getElementById('pos-payment-method').value;
 
-    // Validasi Pelanggan (Wajib)
     if (!phoneInput || !nameInput) {
         return alert("WAJIB: Sila isi Nama dan No Telefon pelanggan (Mula dengan 6) sebelum meneruskan transaksi.");
     }
 
-    // Simpan ke CRM dan Validasi Nombor Telefon
     const crmResult = CRMModule.saveCustomer(nameInput, phoneInput);
     if (!crmResult.success) {
-        return alert(crmResult.msg); // Ralat jika format telefon salah
+        return alert(crmResult.msg); 
     }
     const customer = crmResult.customer;
 
-    // Pengiraan
     const subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
     let discount = POSModule.currentDiscount || 0;
     let total = subtotal - discount;
@@ -211,7 +251,6 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     const itemsCopy = [...POSModule.cart];
     const currentBill = POSModule.nextBillNo;
 
-    // Logik Buku 555
     if (paymentMethod === 'HUTANG') {
         if (!currentPlanConfig.enableBuku555) return alert("Pakej anda tidak menyokong fungsi Buku 555. Sila tukar kaedah bayaran.");
         if (type !== 'RECEIPT') return alert("Hutang hanya boleh direkodkan menggunakan JANA RESIT MUKTAMAD.");
@@ -219,7 +258,6 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         alert(`Berjaya direkodkan ke Buku 555 atas nama ${customer.name}`);
     }
 
-    // Simpan Sejarah
     const transactionRecord = {
         billNo: currentBill,
         date: new Date().toLocaleString(),
@@ -232,7 +270,6 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     };
     HistoryModule.saveTransaction(transactionRecord);
 
-    // Potong Stok
     if (type === 'RECEIPT') {
         let products = InventoryModule.getProducts();
         POSModule.cart.forEach(cartItem => { 
@@ -240,9 +277,13 @@ window.processTransaction = function(type, printMethod = 'PDF') {
             if (p && p.qty > 0) p.qty -= 1; 
         });
         InventoryModule.saveProducts(products); 
+
+        // Tolak kuantiti kupon jika digunakan
+        if (POSModule.appliedKupon) {
+            KuponModule.decrementKupon(POSModule.appliedKupon);
+        }
     }
 
-    // Penjanaan Resit
     if (printMethod === 'BT') {
         if (!currentPlanConfig.enableBluetoothPrint) return alert("Fungsi Print Bluetooth dikunci untuk pakej anda.");
         PrinterModule.printReceipt(transactionRecord, BillingModule.getBizInfo());
