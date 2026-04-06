@@ -1,5 +1,4 @@
 export const WABlastModule = {
-    // Ambil senarai hitam (Nombor yang minta STOP)
     getJail: () => JSON.parse(localStorage.getItem('ketick_jail')) || [],
     
     addToJail: (phone) => {
@@ -10,42 +9,47 @@ export const WABlastModule = {
         }
     },
 
-    // Janakan kod rawak 25 aksara (Anti-Spam)
     generateKetickCode: () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        let result = 'KETICK'; // Mula dengan KETICK
+        let result = 'KETICK'; 
         for (let i = 0; i < 19; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
-        return result; // Total 25 aksara
+        return result; 
     },
 
-    // Proses Blast dengan Delay & Filter Jail
-    processBlast: async (message, delaySeconds, onProgress) => {
+    // 1. SEMI-AUTO (Guna wa.me - Untuk Chrome/Phone Biasa)
+    generateBlastLinks: (message) => {
         const customers = JSON.parse(localStorage.getItem('ketick_crm')) || [];
         const jail = WABlastModule.getJail();
         
         // Tapis pelanggan: Buang yang ada dalam Jail
         const targetList = customers.filter(c => !jail.includes(c.phone));
         
-        for (let i = 0; i < targetList.length; i++) {
-            const customer = targetList[i];
+        return targetList.map(c => {
             const randomCode = WABlastModule.generateKetickCode();
-            
-            // Format mesej: Personalised + Stop Option + Random Code
-            const fullMessage = `${message.replace('[NAMA]', customer.name)}\n\nBalas STOP untuk berhenti.\n\nRef: ${randomCode}`;
-            const waLink = `https://wa.me/${customer.phone}?text=${encodeURIComponent(fullMessage)}`;
+            const fullMessage = `${message.replace('[NAMA]', c.name)}\n\nBalas STOP untuk berhenti.\n\nRef: ${randomCode}`;
+            return {
+                name: c.name,
+                phone: c.phone,
+                link: `https://wa.me/${c.phone}?text=${encodeURIComponent(fullMessage)}`
+            };
+        });
+    },
 
-            onProgress(i + 1, targetList.length, customer.name);
-            
-            // Buka WhatsApp
-            window.open(waLink, '_blank');
-
-            // Tunggu delay (Simulasi delay untuk elak banned)
-            if (i < targetList.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, delaySeconds * 1000));
-            }
-        }
-        return true;
+    // 2. TURBO AUTO (Guna web.whatsapp.com - Untuk Kiwi Browser + Extension)
+    generateTurboLinks: (message) => {
+        const customers = JSON.parse(localStorage.getItem('ketick_crm')) || [];
+        const jail = WABlastModule.getJail();
+        const targetList = customers.filter(c => !jail.includes(c.phone));
+        
+        return targetList.map(c => {
+            const randomCode = WABlastModule.generateKetickCode();
+            const fullMessage = `${message.replace('[NAMA]', c.name)}\n\nBalas STOP untuk berhenti.\n\nRef: ${randomCode}`;
+            return {
+                name: c.name,
+                link: `https://web.whatsapp.com/send?phone=${c.phone}&text=${encodeURIComponent(fullMessage)}`
+            };
+        });
     }
 };
