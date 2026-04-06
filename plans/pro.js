@@ -1,8 +1,15 @@
 export const ProPlan = {
     planName: 'PRO',
-    maxProducts: Infinity,
+    maxProducts: 50,
     canUploadLogo: true,
-    hasWatermark: false,
-    enableWhatsAppReceipt: false,
-    enableSalesReports: true
+    hasWatermark: true,
+    enableWhatsAppReceipt: true,
+    enableSalesReports: true,
+    // MODUL BARU
+    enableCRM: false,
+    enableKupon: false,
+    enableLHDN: false,
+    enableWABlast: true,
+    enableBluetoothPrint: false,
+    enableBuku555: false
 };
