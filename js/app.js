@@ -112,7 +112,8 @@ function renderCRM() {
                 <div class="text-[10px] text-purple-400 font-mono mt-1">${c.phone}</div>
             </div>
             <div class="text-right">
-                <div class="text-[10px] opacity-70 bg-black/50 px-2 py-1 rounded-md">Pts: ${c.points || 0}</div>
+                <div class="text-[10px] opacity-70 bg-black/50 px-2 py-1 rounded-md mb-1">Pts: ${c.points || 0}</div>
+                <button onclick="toggleJail('${c.phone}')" class="text-[8px] border border-red-500/50 text-red-400 px-2 py-1 rounded hover:bg-red-500/20">STOP / JAIL</button>
             </div>
         </div>
     `).join('');
@@ -178,11 +179,17 @@ function refreshAllUI() {
     POSModule.renderPOSSelect('pos-select-list');
     POSModule.renderCart('cart-items', 'total-price');
     DashboardModule.render('dashboard-container', currentPlanConfig); 
-    HistoryModule.render('history-list', currentPlanConfig); 
+    HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value); 
     renderCRM();
     renderBuku555();
     renderKuponManager();
 }
+
+// --- FUNGSI SEARCH HISTORY ---
+window.filterHistory = function() {
+    const query = document.getElementById('history-search').value;
+    HistoryModule.render('history-list', currentPlanConfig, query);
+};
 
 // --- HELPER TRANSAKSI & POS ---
 window.searchCustomer = function() {
@@ -217,20 +224,33 @@ window.createNewKupon = function() {
     refreshAllUI();
 };
 
-window.triggerWABlast = function() {
-    if(!currentPlanConfig.enableWABlast) return alert("Fungsi WA Blast dikunci untuk pelan ini.");
-    const msg = prompt("Masukkan mesej promosi. Gunakan [NAMA] untuk letak nama pelanggan:", "Hi [NAMA], kami ada promosi istimewa hari ini!");
-    if(!msg) return;
+// --- FUNGSI WA BLAST ---
+window.startWABlast = async function() {
+    if(!currentPlanConfig.enableWABlast) return alert("Pakej anda tidak menyokong WA Blast.");
     
-    const links = WABlastModule.generateBlastLinks(msg);
-    if(links && links.length > 0) {
-        alert(`Terdapat ${links.length} sasaran. Sila klik butang hantar yang dijana.`);
-        const crmList = document.getElementById('crm-list');
-        crmList.innerHTML = `<button onclick="switchTab('tab-crm')" class="text-[10px] w-full text-center mb-3 text-red-400 border border-red-400 p-2 rounded-xl">Batalkan Mod Blast</button>` + 
-        links.map((link, i) => `
-            <a href="${link}" target="_blank" class="block bg-green-600 hover:bg-green-500 p-3 rounded-xl mb-2 text-[10px] font-bold text-center text-white shadow-lg transition">🚀 HANTAR KE PELANGGAN ${i+1}</a>
-        `).join('');
+    const message = document.getElementById('blast-msg').value;
+    const delay = parseInt(document.getElementById('blast-delay').value);
+    
+    if(!message) return alert("Sila masukkan mesej.");
+    if(delay < 30) return alert("Delay minimum adalah 30 saat untuk keselamatan.");
+
+    if(confirm(`Mula hantar mesej ke semua pelanggan (Kecuali senarai Jail)? Delay: ${delay}s setiap mesej.`)) {
+        await WABlastModule.processBlast(message, delay, (current, total, name) => {
+            document.getElementById('blast-status-display').innerHTML = `
+                <div class="animate-pulse text-green-400 font-bold">Sedang Menghantar: ${current}/${total}</div>
+                <p class="text-[10px] opacity-50">Sila jangan tutup tab ini. Seterusnya: ${name}</p>
+            `;
+        });
+        alert("Blast selesai!");
+        document.getElementById('blast-status-display').innerHTML = "Blast selesai sepenuhnya.";
+        refreshAllUI();
     }
+};
+
+window.toggleJail = function(phone) {
+    WABlastModule.addToJail(phone);
+    alert(`Nombor ${phone} telah dimasukkan ke dalam JAIL (Penyekat Blast).`);
+    refreshAllUI();
 };
 
 window.processTransaction = function(type, printMethod = 'PDF') {
@@ -306,7 +326,6 @@ window.processTransaction = function(type, printMethod = 'PDF') {
         BillingModule.generatePDF(type, currentBill, itemsCopy, total, discount, customer, paymentMethod, currentPlanConfig);
     }
     
-    // Reset Data POS
     POSModule.incrementBillNo();
     POSModule.clearCart();
     document.getElementById('pos-phone').value = '';
@@ -382,10 +401,8 @@ function setupEventListeners() {
 // --- FUNGSI TAMBAHAN UNTUK CRM UI ---
 window.addManualCustomer = function() {
     if(!currentPlanConfig.enableCRM) return alert("Pakej anda tidak menyokong modul CRM.");
-    
     const name = document.getElementById('crm-manual-name').value;
     const phone = document.getElementById('crm-manual-phone').value;
-    
     if(!name || !phone) return alert("Sila masukkan nama dan nombor telefon.");
     
     const result = CRMModule.saveCustomer(name, phone);
@@ -402,7 +419,6 @@ window.addManualCustomer = function() {
 
 window.importPhoneContacts = async function() {
     if(!currentPlanConfig.enableCRM) return alert("Pakej anda tidak menyokong modul CRM.");
-    
     const result = await CRMModule.importFromContacts();
     if(result.success) {
         alert(`Berjaya import ${result.count} nombor dari kenalan telefon anda!`);
@@ -415,7 +431,6 @@ window.importPhoneContacts = async function() {
 
 window.handleExcelUpload = function(input) {
     if(!currentPlanConfig.enableCRM) return alert("Pakej anda tidak menyokong modul CRM.");
-    
     if (input.files && input.files[0]) {
         alert("Sedang memproses fail Excel/CSV...");
         CRMModule.importFromExcel(input.files[0], (result) => {
@@ -426,7 +441,7 @@ window.handleExcelUpload = function(input) {
             } else {
                 alert(`Ralat: ${result.msg}`);
             }
-            input.value = ''; // Reset input fail
+            input.value = ''; 
         });
     }
 };
