@@ -6,7 +6,7 @@
     <title>KETICK4MICRO</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4D30FF">
+    <meta name="theme-color" content="#020107">
     <link rel="apple-touch-icon" href="icon-001.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,22 +18,12 @@
     <style>
         body { background-color: #020107; color: #FFFFFF; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .gradient-text { background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .active-tab { background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%); color: white !important; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .active-tab { background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .tab-btn { color: #94a3b8; }
         .hidden { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registered'))
-                    .catch(err => console.log('SW failed', err));
-            });
-        }
-    </script>
 </head>
 <body class="p-4 mx-auto max-w-lg">
     
@@ -55,25 +45,21 @@
                 <h2 class="text-xl font-bold text-purple-400">Business Settings</h2>
                 <button onclick="closeSettings()" class="text-2xl opacity-50 hover:opacity-100 transition">✕</button>
             </div>
-            
             <div class="space-y-4 pb-20">
                 <div class="bg-white/5 p-6 rounded-3xl border border-dashed border-white/10 text-center">
                     <img id="logo-preview" src="https://via.placeholder.com/100" class="h-20 mx-auto mb-4 object-contain">
                     <input type="file" id="biz-logo-input" onchange="previewLogo(this)" class="hidden">
                     <label for="biz-logo-input" class="bg-white/10 px-4 py-2 rounded-lg text-[10px] font-bold cursor-pointer hover:bg-white/20 transition">Tukar Logo</label>
                 </div>
-
                 <input type="text" id="biz-name" placeholder="Nama Bisnes" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-sm outline-none focus:border-purple-500">
                 <textarea id="biz-address" placeholder="Alamat" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-sm outline-none h-20 focus:border-purple-500"></textarea>
                 <input type="text" id="biz-phone" placeholder="No. Telefon" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-sm outline-none focus:border-purple-500">
-                
                 <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
                     <p class="text-[10px] opacity-50 mb-3 uppercase font-bold tracking-widest">Maklumat Pembayaran</p>
                     <input type="text" id="biz-bank" placeholder="Nama Bank" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-sm outline-none mb-2 focus:border-purple-500">
                     <input type="text" id="biz-acc-no" placeholder="No. Akaun" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-sm outline-none mb-2 focus:border-purple-500">
                     <input type="text" id="biz-acc-name" placeholder="Nama Pemegang Akaun" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-sm outline-none focus:border-purple-500">
                 </div>
-
                 <button onclick="saveSettings()" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-2xl font-bold shadow-xl transition active:scale-95">SIMPAN TETAPAN</button>
             </div>
         </div>
@@ -82,41 +68,84 @@
     <div class="max-w-md mx-auto">
         
         <div class="overflow-x-auto pb-2 no-scrollbar mb-4">
-            <nav class="flex gap-2 bg-white/5 p-1 rounded-2xl border border-white/5 w-[120%] sm:w-full">
-                <button onclick="switchTab('tab-dash')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition active-tab whitespace-nowrap" id="btn-dash">DASHBOARD</button>
-                <button onclick="switchTab('tab-pos')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition whitespace-nowrap" id="btn-pos">POS</button>
-                <button onclick="switchTab('tab-history')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition whitespace-nowrap" id="btn-history">SEJARAH</button>
-                <button onclick="switchTab('tab-inventory')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition whitespace-nowrap" id="btn-inventory">STOK</button>
+            <nav class="flex gap-2 bg-white/5 p-1 rounded-2xl border border-white/5 w-[160%] sm:w-[120%]">
+                <button onclick="switchTab('tab-dash')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition opacity-50 whitespace-nowrap" id="btn-dash">DASHBOARD</button>
+                <button onclick="switchTab('tab-pos')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition active-tab text-white whitespace-nowrap" id="btn-pos">POS</button>
+                <button onclick="switchTab('tab-crm')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition opacity-50 whitespace-nowrap" id="btn-crm">CRM</button>
+                <button onclick="switchTab('tab-555')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition opacity-50 whitespace-nowrap" id="btn-555">BUKU 555</button>
+                <button onclick="switchTab('tab-history')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition opacity-50 whitespace-nowrap" id="btn-history">SEJARAH</button>
+                <button onclick="switchTab('tab-inventory')" class="tab-btn flex-1 py-3 rounded-xl font-bold text-[10px] transition opacity-50 whitespace-nowrap" id="btn-inventory">STOK</button>
             </nav>
         </div>
 
-        <div id="tab-dash" class="tab-content pb-10">
+        <div id="tab-dash" class="tab-content hidden pb-10">
             <div id="dashboard-container"></div>
         </div>
 
-        <div id="tab-pos" class="tab-content hidden pb-10">
+        <div id="tab-crm" class="tab-content hidden pb-10">
+            <button onclick="triggerWABlast()" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-xs mb-6 shadow-[0_0_15px_rgba(22,163,74,0.4)] transition">🚀 WA BLAST (HANTAR PROMO)</button>
+            <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase">Pangkalan Data Pelanggan</h2>
+            <div id="crm-list" class="space-y-1"></div>
+        </div>
+
+        <div id="tab-555" class="tab-content hidden pb-10">
+            <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase tracking-widest text-red-400">Peringatan Hutang</h2>
+            <div id="buku555-list" class="space-y-1"></div>
+        </div>
+
+        <div id="tab-pos" class="tab-content pb-10">
             <div class="flex flex-col gap-4">
+                
+                <div class="bg-white/5 p-4 rounded-3xl border border-white/10 shadow-lg relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-purple-600/20 text-purple-400 text-[8px] px-2 py-1 rounded-bl-lg font-bold">WAJIB ISI</div>
+                    <p class="text-[10px] opacity-70 font-bold mb-3 uppercase">Pendaftaran Pelanggan</p>
+                    <div class="flex gap-2 mb-3">
+                        <input type="number" id="pos-phone" placeholder="No. Tel (Mula dgn 6)" class="bg-black/40 border border-white/5 p-3 rounded-xl w-[60%] text-xs outline-none focus:border-purple-500 transition">
+                        <button onclick="searchCustomer()" class="bg-white/10 hover:bg-white/20 px-3 rounded-xl text-xs font-bold w-[40%] transition">CARI 🔍</button>
+                    </div>
+                    <input type="text" id="pos-name" placeholder="Nama Pelanggan" class="bg-black/40 border border-white/5 p-3 rounded-xl w-full text-xs outline-none focus:border-purple-500 transition">
+                </div>
+
                 <div class="w-full">
                     <h2 class="text-[10px] mb-2 opacity-70 font-bold uppercase tracking-wider px-1">Pilih Produk</h2>
                     <div id="pos-select-list" class="grid grid-cols-3 gap-2 max-h-[25vh] overflow-y-auto p-1"></div>
                 </div>
                 
                 <div class="bg-gradient-to-br from-purple-900/40 to-black p-5 w-full rounded-3xl border border-purple-500/30 shadow-2xl">
+                    <div class="mb-4 space-y-2 border-b border-white/10 pb-4">
+                        <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest">Tetapan Transaksi</p>
+                        <select id="pos-payment-method" class="bg-black/60 border border-white/10 p-3 rounded-xl w-full text-xs font-bold outline-none appearance-none">
+                            <option value="TUNAI">💵 PEMBAYARAN: TUNAI</option>
+                            <option value="QR PAY">📱 PEMBAYARAN: QR PAY</option>
+                            <option value="TRANSFER">🏦 PEMBAYARAN: TRANSFER</option>
+                            <option value="HUTANG">📖 MASUK BUKU 555 (HUTANG)</option>
+                        </select>
+                        <div class="flex gap-2">
+                            <input type="text" id="pos-kupon" placeholder="Kod Kupon Diskaun" class="bg-black/60 border border-white/10 p-3 rounded-xl w-[70%] text-xs outline-none uppercase font-mono">
+                            <button onclick="applyKupon()" class="bg-white/10 hover:bg-white/20 w-[30%] rounded-xl text-[10px] font-bold transition">TUNTUT</button>
+                        </div>
+                    </div>
+
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="font-bold text-sm">Bil Semasa</h2>
+                        <h2 class="font-bold text-sm">Troli</h2>
                         <span class="text-purple-400 font-mono font-bold text-lg" id="next-bill-no-display">#1001</span>
                     </div>
-                    <div id="cart-items" class="space-y-2 mb-4 min-h-[120px] max-h-[25vh] overflow-y-auto border-b border-white/10 pb-4"></div>
-                    <div class="flex justify-between mb-4 font-bold text-xl text-white">
+                    <div id="cart-items" class="space-y-2 mb-4 min-h-[100px] max-h-[25vh] overflow-y-auto border-b border-white/10 pb-4"></div>
+                    
+                    <div class="flex justify-between mb-4 items-end text-white" id="total-price">
                         <span>Total:</span>
-                        <span id="total-price">RM 0.00</span>
+                        <span class="text-xl font-bold">RM 0.00</span>
                     </div>
+
                     <div class="space-y-2">
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="processTransaction('QUOTATION')" class="border border-purple-500 text-purple-400 py-3 rounded-xl text-[10px] font-bold hover:bg-purple-500/20 transition">QUOTATION</button>
                             <button onclick="processTransaction('INVOICE')" class="border border-blue-500 text-blue-400 py-3 rounded-xl text-[10px] font-bold hover:bg-blue-500/20 transition">INVOICE</button>
                         </div>
-                        <button onclick="processTransaction('RECEIPT')" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold shadow-lg text-sm mt-1 transition">JANA RESIT MUKTAMAD</button>
+                        <div class="grid grid-cols-2 gap-2 mt-1">
+                            <button onclick="processTransaction('RECEIPT', 'PDF')" class="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-bold shadow-lg text-[10px] transition">📄 JANA PDF</button>
+                            <button onclick="processTransaction('RECEIPT', 'BT')" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold shadow-lg text-[10px] transition">🖨️ PRINT BT</button>
+                        </div>
                         <button onclick="cancelBill()" class="w-full text-[10px] opacity-50 py-3 mt-1 hover:text-red-400 transition">Batalkan Transaksi</button>
                     </div>
                 </div>
@@ -143,7 +172,6 @@
                     </form>
                 </div>
             </section>
-
             <section>
                 <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase">Senarai Inventori</h2>
                 <div id="inventory-list" class="pb-20"></div>
