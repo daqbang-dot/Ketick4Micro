@@ -29,12 +29,11 @@ let isDevMode = true;
 function initApp() {
     console.log(`[KETICK4MICRO] Sistem bermula.`);
     
-    // 1. Inisialisasi Tema (Dark/Light)
+    // Inisialisasi Tema (Dark/Light)
     const savedTheme = localStorage.getItem('ketick_theme');
     if (savedTheme === 'light') { document.documentElement.classList.remove('dark'); } 
     else { document.documentElement.classList.add('dark'); }
     
-    // 2. Pantau Status Login
     AuthModule.onStatusChange(async (user) => {
         if (user) {
             currentUser = user;
@@ -83,8 +82,8 @@ function updateAuthUI(user) {
 // --- PENGURUSAN TAB ---
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab', 'text-white'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.add('opacity-50'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active-tab', 'text-white', 'text-slate-800'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.add('opacity-50', 'text-slate-500'));
     
     document.getElementById(tabId).classList.remove('hidden');
     const btnId = tabId.replace('tab-', 'btn-');
@@ -107,7 +106,7 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
-// --- SETTINGS (FIXED) ---
+// --- SETTINGS ---
 window.openSettings = function() {
     const modal = document.getElementById('settings-page');
     if (modal) {
@@ -193,7 +192,7 @@ window.saveNewExpense = function() {
 };
 
 window.generateTaxReport = (type) => {
-    if(!currentPlanConfig.enableLHDN) return alert("Naik taraf Legend untuk Laporan LHDN.");
+    if(!currentPlanConfig.enableLHDN) return alert("Pakej Legend diperlukan.");
     const val = (type === 'MONTH') ? prompt("Bulan (MM-YYYY):", "04-2026") : prompt("Tahun (YYYY):", "2026");
     if(val) LHDNModule.downloadTaxReport(type, val);
 };
@@ -208,7 +207,10 @@ function renderCRM() {
     container.innerHTML = customers.map(c => `
         <div class="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-2xl flex justify-between items-center mb-2">
             <div><div class="font-bold text-xs">${c.name}</div><div class="text-[10px] text-blue-600 dark:text-purple-400 font-mono">${c.phone}</div></div>
-            <div class="text-right"><div class="text-[10px] opacity-70">Pts: ${c.points || 0}</div><button onclick="toggleJail('${c.phone}')" class="text-[8px] text-red-500">STOP</button></div>
+            <div class="text-right">
+                <div class="text-[10px] opacity-70">Pts: ${c.points || 0}</div>
+                <button onclick="toggleJail('${c.phone}')" class="text-[8px] text-red-500">STOP</button>
+            </div>
         </div>
     `).join('');
 }
@@ -218,9 +220,9 @@ function renderBuku555() {
     if(!container || !currentPlanConfig.enableBuku555) return;
     const debts = Buku555Module.getDebts();
     container.innerHTML = debts.map(d => `
-        <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-2xl flex justify-between items-center mb-2">
+        <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-2xl border border-red-100 dark:border-red-500/20 flex justify-between items-center mb-2">
             <div><div class="font-bold text-xs text-red-600">${d.name}</div><div class="text-[9px] opacity-70">Bil: #${d.billNo}</div></div>
-            <div class="font-bold text-sm">RM ${d.amount.toFixed(2)}</div>
+            <div class="font-bold text-sm text-red-700 dark:text-white">RM ${d.amount.toFixed(2)}</div>
         </div>
     `).join('');
 }
@@ -230,9 +232,9 @@ function renderKuponManager() {
     if(!container || !currentPlanConfig.enableKupon) return;
     const kupons = KuponModule.getKupons();
     container.innerHTML = kupons.map(k => `
-        <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center mb-2">
-            <div><div class="font-bold text-xs text-blue-600">${k.code}</div><div class="text-[9px] opacity-60">${k.value} | Min: RM${k.minSpend}</div></div>
-            <div class="text-[10px] font-bold">${k.qty} baki</div>
+        <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center mb-2 shadow-sm">
+            <div><div class="font-bold text-xs text-blue-600">${k.code}</div><div class="text-[9px] opacity-60">RM ${k.value} | Min: RM${k.minSpend}</div></div>
+            <div class="text-[10px] font-bold text-green-600">${k.qty} baki</div>
         </div>
     `).join('');
 }
@@ -301,7 +303,7 @@ window.startWABlast = function() {
     if(!msg) return alert("Isi mesej.");
     const queue = WABlastModule.generateBlastLinks(msg);
     const display = document.getElementById('blast-status-display');
-    display.innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white">HANTAR ${i+1}: ${q.name}</a>`).join('');
+    display.innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white text-center">HANTAR ${i+1}: ${q.name}</a>`).join('');
 };
 
 window.startTurboBlast = async function() {
@@ -320,7 +322,11 @@ window.startTurboBlast = async function() {
 window.filterHistory = () => HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value);
 window.cancelBill = () => { if(confirm("Batal transaksi?")) POSModule.clearCart(); };
 window.toggleJail = (p) => { WABlastModule.addToJail(p); refreshAllUI(); };
-window.addManualCustomer = () => { CRMModule.saveCustomer(document.getElementById('crm-manual-name').value, document.getElementById('crm-manual-phone').value); refreshAllUI(); };
+window.addManualCustomer = () => { 
+    const n = document.getElementById('crm-manual-name').value;
+    const p = document.getElementById('crm-manual-phone').value;
+    if(n && p) { CRMModule.saveCustomer(n, p); refreshAllUI(); }
+};
 window.createNewKupon = () => {
     const data = { code: document.getElementById('kp-code').value, type: document.getElementById('kp-type').value, value: document.getElementById('kp-value').value, minSpend: document.getElementById('kp-min').value, qty: document.getElementById('kp-qty').value };
     KuponModule.addKupon(data);
@@ -337,7 +343,7 @@ function setupEventListeners() {
                 desc: document.getElementById('p-desc').value,
                 price: document.getElementById('p-price').value,
                 qty: document.getElementById('p-qty').value,
-                img: "" // Gambar diuruskan oleh reader di InventoryModule jika perlu
+                img: "" 
             };
             InventoryModule.addProduct(formData, currentPlanConfig, () => { refreshAllUI(); form.reset(); });
         };
