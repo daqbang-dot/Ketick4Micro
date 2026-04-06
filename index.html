@@ -14,8 +14,7 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-
-    <style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <style>
         body { background-color: #020107; color: #FFFFFF; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .gradient-text { background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .active-tab { background: linear-gradient(135deg, #4D30FF 0%, #CB7CFD 100%); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
@@ -115,8 +114,35 @@
         </div>
 
         <div id="tab-crm" class="tab-content hidden pb-10">
-            <button onclick="triggerWABlast()" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-xs mb-6 shadow-[0_0_15px_rgba(22,163,74,0.4)] transition">🚀 WA BLAST (HANTAR PROMO)</button>
-            <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase">Pangkalan Data Pelanggan</h2>
+            <button onclick="triggerWABlast()" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-xs mb-4 shadow-[0_0_15px_rgba(22,163,74,0.4)] transition">🚀 WA BLAST (HANTAR PROMO)</button>
+            
+            <div class="bg-white/5 p-4 rounded-3xl border border-white/10 mb-6 shadow-lg">
+                <h2 class="text-[10px] font-bold mb-3 opacity-70 uppercase text-blue-400 tracking-widest">Tambah Pelanggan Baru</h2>
+                
+                <div class="flex gap-2 mb-4 border-b border-white/5 pb-4">
+                    <input type="text" id="crm-manual-name" placeholder="Nama" class="bg-black/40 border border-white/5 p-3 rounded-xl w-1/2 text-xs outline-none focus:border-blue-500 transition">
+                    <input type="number" id="crm-manual-phone" placeholder="No Tel (601...)" class="bg-black/40 border border-white/5 p-3 rounded-xl w-1/2 text-xs outline-none focus:border-blue-500 transition">
+                    <button onclick="addManualCustomer()" class="bg-blue-600 hover:bg-blue-500 px-3 rounded-xl font-bold text-xs transition">➕</button>
+                </div>
+
+                <h2 class="text-[9px] font-bold mb-2 opacity-50 uppercase text-center tracking-wider">Import Pukal / Automatik</h2>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="importPhoneContacts()" class="bg-white/10 hover:bg-white/20 p-2 rounded-xl text-[9px] font-bold flex flex-col items-center gap-1 transition">
+                        <span class="text-lg">📱</span> Contact HP
+                    </button>
+                    
+                    <button onclick="document.getElementById('xls-upload').click()" class="bg-white/10 hover:bg-white/20 p-2 rounded-xl text-[9px] font-bold flex flex-col items-center gap-1 transition">
+                        <span class="text-lg">📊</span> Fail .XLS
+                    </button>
+                    <input type="file" id="xls-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(this)">
+                    
+                    <button onclick="alert('Ciri Import Google akan diaktifkan apabila KETICK disambungkan ke Firebase (Fasa Seterusnya).')" class="bg-white/5 opacity-50 p-2 rounded-xl text-[9px] font-bold flex flex-col items-center gap-1">
+                        <span class="text-lg">🌐</span> Google
+                    </button>
+                </div>
+            </div>
+
+            <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase tracking-widest">Pangkalan Data Pelanggan</h2>
             <div id="crm-list" class="space-y-1"></div>
         </div>
 
@@ -130,7 +156,7 @@
                 
                 <div class="bg-white/5 p-4 rounded-3xl border border-white/10 shadow-lg relative overflow-hidden">
                     <div class="absolute top-0 right-0 bg-purple-600/20 text-purple-400 text-[8px] px-2 py-1 rounded-bl-lg font-bold">WAJIB ISI</div>
-                    <p class="text-[10px] opacity-70 font-bold mb-3 uppercase">Pendaftaran Pelanggan</p>
+                    <p class="text-[10px] opacity-70 font-bold mb-3 uppercase tracking-widest">Pendaftaran Pelanggan</p>
                     <div class="flex gap-2 mb-3">
                         <input type="number" id="pos-phone" placeholder="No. Tel (Mula dgn 6)" class="bg-black/40 border border-white/5 p-3 rounded-xl w-[60%] text-xs outline-none focus:border-purple-500 transition">
                         <button onclick="searchCustomer()" class="bg-white/10 hover:bg-white/20 px-3 rounded-xl text-xs font-bold w-[40%] transition">CARI 🔍</button>
