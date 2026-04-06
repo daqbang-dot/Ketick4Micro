@@ -1,82 +1,55 @@
 export const CRMModule = {
     getCustomers: () => JSON.parse(localStorage.getItem('ketick_crm')) || [],
+    saveCustomers: (data) => localStorage.setItem('ketick_crm', JSON.stringify(data)),
     
     saveCustomer: (name, phone) => {
-        let formattedPhone = phone.replace(/\D/g,''); 
-        if (formattedPhone.startsWith('0')) formattedPhone = '6' + formattedPhone;
-        if (!formattedPhone.startsWith('6')) return { success: false, msg: "No. Tel mesti mula dengan 6" };
-
         let customers = CRMModule.getCustomers();
-        let existing = customers.find(c => c.phone === formattedPhone);
-        
+        let existing = customers.find(c => c.phone === phone);
         if (existing) {
             existing.name = name; 
-        } else {
-            customers.push({ id: Date.now(), name: name, phone: formattedPhone, points: 0, totalSpent: 0 });
+            CRMModule.saveCustomers(customers);
+            return { success: true, customer: existing, msg: "Data dikemaskini." };
         }
-        
-        localStorage.setItem('ketick_crm', JSON.stringify(customers));
-        return { success: true, customer: existing || customers[customers.length - 1] };
+        const newCust = { id: Date.now(), name, phone, points: 0 };
+        customers.push(newCust);
+        CRMModule.saveCustomers(customers);
+        return { success: true, customer: newCust, msg: "Berjaya daftar." };
     },
 
-    searchCustomer: (phone) => {
-        let formattedPhone = phone.replace(/\D/g,'');
-        if (formattedPhone.startsWith('0')) formattedPhone = '6' + formattedPhone;
-        return CRMModule.getCustomers().find(c => c.phone === formattedPhone) || null;
+    updateCustomerDetails: (id, newName, newPhone) => {
+        let c = CRMModule.getCustomers();
+        let idx = c.findIndex(x => x.id === id);
+        if(idx > -1) {
+            c[idx].name = newName;
+            c[idx].phone = newPhone;
+            CRMModule.saveCustomers(c);
+            return true;
+        }
+        return false;
     },
 
-    // Import dari Contact Android (Web Contact API)
-    importFromContacts: async () => {
-        if (!('contacts' in navigator && 'ContactsManager' in window)) {
-            return { success: false, msg: "Peranti/Browser anda tidak menyokong fungsi baca Contact. Sila guna Chrome di Android." };
-        }
-        try {
-            const props = ['name', 'tel'];
-            const opts = { multiple: true };
-            const contacts = await navigator.contacts.select(props, opts);
-            
-            let imported = 0;
-            contacts.forEach(c => {
-                if(c.tel && c.tel.length > 0) {
-                    let phone = c.tel[0];
-                    let name = c.name ? c.name[0] : "Tanpa Nama";
-                    let res = CRMModule.saveCustomer(name, phone);
-                    if(res.success) imported++;
-                }
-            });
-            return { success: true, count: imported };
-        } catch(e) {
-            return { success: false, msg: "Akses kenalan dibatalkan oleh pengguna." };
-        }
+    deleteCustomer: (id) => {
+        let c = CRMModule.getCustomers();
+        CRMModule.saveCustomers(c.filter(x => x.id !== id));
     },
 
-    // Import dari Excel menggunakan SheetJS
+    // Kita buang Google Import yang rosak tu, ganti dengan import fail sahaja.
     importFromExcel: (file, callback) => {
-        if(!window.XLSX) return callback({ success: false, msg: "Pustaka SheetJS belum dimuatkan." });
-        
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.SheetNames[0];
-                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
-                
-                let imported = 0;
-                rows.forEach(row => {
-                    // Cari column yang menyerupai Nama dan Nombor Telefon (Sangat fleksibel)
-                    let name = row['Nama'] || row['Name'] || row['nama'] || Object.values(row)[0];
-                    let phone = row['Phone'] || row['No Tel'] || row['Telefon'] || row['tel'] || Object.values(row)[1];
-                    
-                    if(name && phone) {
-                        let res = CRMModule.saveCustomer(String(name), String(phone));
-                        if(res.success) imported++;
-                    }
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+                let count = 0;
+                json.forEach(row => {
+                    const phone = row.Phone || row.Telefon || row.NoTel;
+                    const name = row.Name || row.Nama;
+                    if(phone && name) { CRMModule.saveCustomer(String(name), String(phone)); count++; }
                 });
-                callback({ success: true, count: imported });
-            } catch(err) {
-                callback({ success: false, msg: "Fail tidak sah atau rosak." });
-            }
+                callback({success: true, count});
+            } catch(err) { callback({success: false, msg: "Format fail tidak sah."}); }
         };
         reader.readAsArrayBuffer(file);
     }
