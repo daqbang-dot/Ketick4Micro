@@ -1,4 +1,3 @@
-import { AuthModule } from './firebase-auth.js';
 import { BasicPlan } from '../plans/basic.js';
 import { ProPlan } from '../plans/pro.js';
 import { Premium } from '../plans/premium.js';
@@ -18,9 +17,9 @@ import { Buku555Module } from '../modules/buku555.js';
 import { WABlastModule } from '../modules/wablast.js';
 import { PrinterModule } from '../modules/printer.js';
 import { LHDNModule } from '../modules/lhdn.js';
+import { LicenseModule } from '../modules/license.js';
 
 let currentPlanConfig = BasicPlan; 
-let currentUser = null;
 let isDevMode = true; 
 
 // --- ENJIN CUSTOM MODAL (GLASSMORPHISM) ---
@@ -98,22 +97,67 @@ function initApp() {
     if (savedTheme === 'light') { document.documentElement.classList.remove('dark'); } 
     else { document.documentElement.classList.add('dark'); }
     
-    AuthModule.onStatusChange(async (user) => {
-        if (user) {
-            currentUser = user;
-            setPlan(await AuthModule.getUserPlan(user.uid));
-            updateAuthUI(user);
-        } else {
-            currentUser = null;
-            setPlan('BASIC');
-            updateAuthUI(null);
-        }
-        document.getElementById('next-bill-no-display').innerText = `#${POSModule.nextBillNo}`;
-        refreshAllUI();
-    });
+    checkLicenseSystem();
+    
+    document.getElementById('next-bill-no-display').innerText = `#${POSModule.nextBillNo}`;
+    refreshAllUI();
     setupEventListeners();
     if(isDevMode) setTimeout(() => initDevTools(currentPlanConfig), 500); 
 }
+
+function checkLicenseSystem() {
+    const lic = LicenseModule.checkStatus();
+    if (lic.status === 'LOCKED') {
+        document.getElementById('paywall-overlay').classList.remove('hidden');
+        document.getElementById('paywall-msg').innerText = lic.msg;
+        setPlan('BASIC'); 
+    } else {
+        document.getElementById('paywall-overlay').classList.add('hidden');
+        setPlan(lic.status);
+        
+        const infoDisplay = document.getElementById('license-info-display');
+        if (infoDisplay) {
+            if (lic.status === 'BASIC') {
+                infoDisplay.innerText = "Pakej Semasa: BASIC (Percuma / Tiada Lesen)";
+            } else {
+                const dateExp = new Date(lic.expiryDate).toLocaleDateString();
+                infoDisplay.innerText = `Pakej: ${lic.status} | Sah Sehingga: ${dateExp}`;
+            }
+        }
+    }
+}
+
+window.applyNewLicense = async function() {
+    const key = document.getElementById('settings-license-key').value;
+    if(!key) return await KetickModal.alert("Sila masukkan kunci lesen.");
+    
+    const result = LicenseModule.verifyKey(key);
+    if (result.valid) {
+        LicenseModule.saveLicense(key);
+        await KetickModal.alert(`Berjaya! Sistem dinaik taraf ke pelan ${result.plan}.`);
+        document.getElementById('settings-license-key').value = '';
+        checkLicenseSystem(); 
+        refreshAllUI();
+    } else {
+        await KetickModal.alert(result.msg);
+    }
+};
+
+window.unlockPaywall = async function() {
+    const key = document.getElementById('paywall-key-input').value;
+    if(!key) return alert("Sila masukkan kunci lesen."); 
+    
+    const result = LicenseModule.verifyKey(key);
+    if (result.valid) {
+        LicenseModule.saveLicense(key);
+        alert(`Sistem dibuka! Selamat kembali ke pelan ${result.plan}.`);
+        document.getElementById('paywall-key-input').value = '';
+        checkLicenseSystem(); 
+        refreshAllUI();
+    } else {
+        alert(result.msg);
+    }
+};
 
 window.toggleTheme = function() {
     document.documentElement.classList.toggle('dark');
@@ -126,13 +170,6 @@ function setPlan(planName) {
     else if (planName === 'PRO') currentPlanConfig = ProPlan;
     else currentPlanConfig = BasicPlan;
     document.getElementById('auth-status').innerText = `${currentPlanConfig.planName} MODE`;
-}
-
-function updateAuthUI(user) {
-    const btn = document.getElementById('login-trigger-btn');
-    if (!btn) return;
-    btn.innerText = user ? "LOGOUT" : "LOGIN";
-    btn.onclick = () => user ? AuthModule.logout() : AuthModule.login();
 }
 
 window.switchTab = function(tabId) {
@@ -172,7 +209,7 @@ window.saveSettings = async function() {
 };
 
 window.previewLogo = async function(input) {
-    if (!currentPlanConfig.canUploadLogo) return await KetickModal.alert("Pakej tak sokong logo.");
+    if (!currentPlanConfig.canUploadLogo) return await KetickModal.alert("Pakej tak sokong muat naik logo.");
     if (input.files && input.files[0]) {
         compressImage(input.files[0], (compressedData) => {
             document.getElementById('logo-preview').src = compressedData;
@@ -196,7 +233,7 @@ function renderLHDNExpenses() {
     const container = document.getElementById('lhdn-expenses-list');
     if(!container) return;
     const expenses = LHDNModule.getExpenses();
-    if(expenses.length === 0) return container.innerHTML = `<div class="text-xs text-center opacity-50 py-4">Tiada rekod.</div>`;
+    if(expenses.length === 0) return container.innerHTML = `<div class="text-xs text-center opacity-50 py-4">Tiada rekod perbelanjaan.</div>`;
     container.innerHTML = expenses.map(e => `
         <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10 mb-2 shadow-sm flex justify-between items-center">
             <div class="flex gap-3 items-center">
@@ -290,7 +327,7 @@ window.editKupon = function(id) {
 window.editCustomer = async function(id, oldName, oldPhone) {
     const newName = await KetickModal.prompt("Kemaskini Nama:", oldName);
     if(newName === null) return;
-    const newPhone = await KetickModal.prompt("Kemaskini No Telefon:", oldPhone);
+    const newPhone = await KetickModal.prompt("Kemaskini No Telefon (Sistem akan auto-format):", oldPhone);
     if(newPhone === null) return;
     
     if(newName && newPhone) { 
@@ -392,7 +429,7 @@ window.toggleJail = (p) => { WABlastModule.addToJail(p); refreshAllUI(); };
 window.addManualCustomer = async () => { 
     const n = document.getElementById('crm-manual-name').value;
     const p = document.getElementById('crm-manual-phone').value;
-    if(!n || !p) return await KetickModal.alert("Isi Nama & No Telefon penuh.");
+    if(!n || !p) return await KetickModal.alert("Sila isi Nama & No Telefon.");
     CRMModule.saveCustomer(n, p); 
     refreshAllUI(); 
 };
@@ -433,7 +470,7 @@ window.saveNewExpense = async function() {
     const amount = document.getElementById('exp-amount').value;
     const cat = document.getElementById('exp-cat').value;
     const imgInput = document.getElementById('exp-img');
-    if(!desc || !amount) return await KetickModal.alert("Sila isi butiran perbelanjaan.");
+    if(!desc || !amount) return await KetickModal.alert("Sila isi butiran.");
 
     const processSave = async (imgData = null) => {
         LHDNModule.saveExpense(desc, amount, cat, imgData);
@@ -456,7 +493,7 @@ window.startWABlast = async function() {
     const msg = document.getElementById('blast-msg').value;
     if(!msg) return await KetickModal.alert("Isi mesej terlebih dahulu.");
     const queue = WABlastModule.generateBlastLinks(msg);
-    document.getElementById('blast-status-display').innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white">HANTAR ${i+1}: ${q.name}</a>`).join('');
+    document.getElementById('blast-status-display').innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white text-center">HANTAR ${i+1}: ${q.name}</a>`).join('');
 };
 
 window.startTurboBlast = async function() {
@@ -475,7 +512,7 @@ window.startTurboBlast = async function() {
 function setupEventListeners() {
     const form = document.getElementById('add-product-form');
     if(form) {
-        form.onsubmit = (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
             const formData = {
                 name: document.getElementById('p-name').value,
@@ -515,5 +552,20 @@ function setupEventListeners() {
         };
     }
 }
+
+// =======================================================
+// ALAT SULIT ADMIN (UNTUK AWAK GENERATE KUNCI LESEN)
+// Buka 'Developer Tools > Console' di browser dan taip:
+// AdminGenerateKey('LEGEND', 30)
+// =======================================================
+window.AdminGenerateKey = async function(planName, days) {
+    const newKey = LicenseModule.generateKey(planName, days);
+    console.log(`%c[KUNCI RAHSIA KETICK]`, `color: yellow; font-size: 16px; font-weight: bold;`);
+    console.log(`Pelan: ${planName} | Tempoh: ${days} Hari`);
+    console.log(`KUNCI: ${newKey}`);
+    
+    // Pakai prompt biasa supaya senang Admin copy dari skrin telefon
+    prompt(`Kunci untuk pelan ${planName} (${days} Hari) berjaya dijana. Sila copy kod di bawah:`, newKey);
+};
 
 window.onload = initApp;
