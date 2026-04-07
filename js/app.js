@@ -189,6 +189,22 @@ window.switchTab = function(tabId) {
     refreshAllUI();
 };
 
+// --- FUNGSI HALAMAN PAKEJ (PRICING) ---
+window.openPricingPage = function() {
+    document.getElementById('pricing-page').classList.remove('hidden');
+};
+
+window.closePricingPage = function() {
+    document.getElementById('pricing-page').classList.add('hidden');
+};
+
+window.buyPlan = function(planName) {
+    // Tukar "60123456789" kepada nombor WhatsApp rasmi Ketick bos
+    const phoneNo = "60123456789"; 
+    const message = encodeURIComponent(`Salam Admin Ketick, saya berminat nak langgan pakej ${planName}. Boleh berikan detail pembayaran?`);
+    window.open(`https://api.whatsapp.com/send?phone=${phoneNo}&text=${message}`, '_blank');
+};
+
 window.openSettings = function() {
     document.getElementById('settings-page').classList.remove('hidden');
     SettingsModule.loadToForm();
@@ -309,7 +325,7 @@ function renderKuponManager() {
     `).join('');
 }
 
-// --- GATEKEEPER FUNGSI (PENGUNCI BUTANGT LOGIK) ---
+// --- GATEKEEPER FUNGSI (PENGUNCI BUTANG LOGIK) ---
 
 window.editingProductId = null;
 window.editInventory = function(id) {
