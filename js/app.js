@@ -72,6 +72,13 @@ window.KetickModal = {
     prompt: (msg, def) => window.KetickModal.show('prompt', msg, def)
 };
 
+// =======================================================
+// TRIK NINJA: HIJACK SEMUA ALERT DARI FAIL LAIN!
+// =======================================================
+window.alert = function(message) {
+    KetickModal.alert(message);
+};
+
 function compressImage(file, callback) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -381,15 +388,42 @@ window.payBuku555 = async function(id, currentAmount) {
 
 window.applyKupon = async () => {
     if(!currentPlanConfig.enableKupon) return await KetickModal.alert("Fungsi Kupon dikunci untuk pakej anda.");
-    const code = document.getElementById('pos-kupon').value;
-    if(code) POSModule.applyKupon(code);
+    
+    const code = document.getElementById('pos-kupon').value.trim();
+    if(!code) return await KetickModal.alert("Sila taip kod kupon.");
+    
+    // Kita buat pengiraan terus dalam app.js (Bypass pos.js yg ada alert hodoh)
+    let subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
+    const check = KuponModule.verifyKupon(code, subtotal);
+    
+    if(!check.valid) {
+        POSModule.appliedKupon = null; 
+        POSModule.currentDiscount = 0; 
+        refreshAllUI();
+        return await KetickModal.alert(`Gagal: ${check.msg}`); // Modal cantik keluar!
+    }
+    
+    POSModule.appliedKupon = code;
+    POSModule.currentDiscount = check.discount;
     refreshAllUI();
+    await KetickModal.alert(`Berjaya! Kupon sah. Diskaun RM${check.discount.toFixed(2)} diberikan.`);
 };
 
 window.searchCustomer = async function() {
-    const phone = document.getElementById('pos-phone').value;
+    const phone = document.getElementById('pos-phone').value.trim(); // Buang space
     if(!phone) return await KetickModal.alert("Sila masukkan no telefon.");
-    if(!POSModule.setCustomerByPhone(phone, 'pos-name')) await KetickModal.alert("Pelanggan baru.");
+    
+    // Carian "Kebal": Tukar semua ke String supaya takde isu nombor tak jumpa
+    const customers = CRMModule.getCustomers();
+    const found = customers.find(c => String(c.phone).trim() === String(phone));
+    
+    if(found) {
+        document.getElementById('pos-name').value = found.name;
+        await KetickModal.alert(`Ditemui: ${found.name}`);
+    } else {
+        document.getElementById('pos-name').value = '';
+        await KetickModal.alert("Pelanggan tiada rekod. Sila taip nama untuk daftar baru automatik.");
+    }
 };
 
 window.processTransaction = async function(type, printMethod = 'PDF') {
