@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 Not Found</title> <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #000; color: #00FF00; font-family: monospace; }</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="border border-green-500/30 p-6 rounded-lg w-full max-w-sm bg-black/80 shadow-[0_0_15px_rgba(0,255,0,0.2)]">
+        <div class="text-center mb-6">
+            <h1 class="text-xl font-bold tracking-widest">SYS_CORE_GEN</h1>
+            <p class="text-[10px] opacity-50">v1.0.0 // SECURE</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] uppercase mb-1 block">TARGET_TIER</label>
+                <select id="pkg-name" class="w-full bg-black border border-green-500/50 rounded p-2 text-sm outline-none text-green-400">
+                    <option value="PRO">TIER: PRO</option>
+                    <option value="PREMIUM">TIER: PREMIUM</option>
+                    <option value="LEGEND">TIER: LEGEND</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="text-[10px] uppercase mb-1 block">LIFESPAN_DAYS</label>
+                <input type="number" id="pkg-days" value="30" class="w-full bg-black border border-green-500/50 rounded p-2 text-sm outline-none text-green-400">
+            </div>
+
+            <button onclick="generateAdminKey()" class="w-full bg-green-900/50 hover:bg-green-800/80 border border-green-500 text-green-400 font-bold py-3 rounded text-sm transition mt-4">
+                EXECUTE_GEN
+            </button>
+
+            <div id="result-box" class="hidden mt-4 pt-4 border-t border-green-500/30">
+                <textarea id="key-output" readonly class="w-full bg-black border border-green-500/50 rounded p-2 text-[10px] outline-none text-white h-20 text-center break-all"></textarea>
+                <button onclick="copyKey()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 rounded text-xs mt-2">
+                    COPY_HASH
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logik Penyamaran (Mesti sama dengan license.js di sistem utama)
+        const KeyEngine = {
+            _m: ['K3T1CK', 'bg-white', 'text-sm', '_RAHSIA', 'flex', 'p-4', '_2026', 'items-center'],
+            _env: function() { return this._m[0] + this._m[3] + this._m[6]; },
+            create: function(plan, days) {
+                const x = new Date();
+                x.setDate(x.getDate() + parseInt(days));
+                const t = x.getTime(); 
+                const py = `${plan}|${t}`;
+                const sg = btoa(py + this._env()).substring(0, 12); 
+                return btoa(`${py}|${sg}`); 
+            }
+        };
+
+        function generateAdminKey() {
+            const plan = document.getElementById('pkg-name').value;
+            const days = document.getElementById('pkg-days').value;
+            if(!days || days <= 0) return alert("ERR_INVALID_INPUT");
+            
+            const newKey = KeyEngine.create(plan, days);
+            document.getElementById('result-box').classList.remove('hidden');
+            document.getElementById('key-output').value = newKey;
+        }
+
+        function copyKey() {
+            const copyText = document.getElementById("key-output");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(copyText.value);
+            alert("HASH_COPIED");
+        }
+    </script>
+</body>
+</html>
