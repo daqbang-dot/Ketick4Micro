@@ -5,7 +5,6 @@ import { Premium } from '../plans/premium.js';
 import { LegendPlan } from '../plans/legend.js';
 import { initDevTools } from './dev-tools.js';
 
-// Modul Teras
 import { InventoryModule } from '../modules/inventory.js';
 import { POSModule } from '../modules/pos.js';
 import { BillingModule } from '../modules/billing.js';
@@ -13,8 +12,6 @@ import { SettingsModule } from '../modules/settings.js';
 import { DashboardModule } from '../modules/dashboard.js'; 
 import { SyncModule } from '../modules/sync.js'; 
 import { HistoryModule } from '../modules/history.js';
-
-// Modul Baharu
 import { CRMModule } from '../modules/crm.js';
 import { KuponModule } from '../modules/kupon.js';
 import { Buku555Module } from '../modules/buku555.js';
@@ -26,8 +23,56 @@ let currentPlanConfig = BasicPlan;
 let currentUser = null;
 let isDevMode = true; 
 
-// --- ENJIN PENGECIL GAMBAR (PENYELESAI MASALAH MEMORI) ---
-// Tukar gambar 5MB jadi 50KB supaya localStorage tak muntah
+// --- ENJIN CUSTOM MODAL (GLASSMORPHISM) ---
+window.KetickModal = {
+    show: function(type, message, defaultValue = '') {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('custom-modal-title');
+            const msgEl = document.getElementById('custom-modal-msg');
+            const inputEl = document.getElementById('custom-modal-input');
+            const btnCancel = document.getElementById('custom-modal-cancel');
+            const btnOk = document.getElementById('custom-modal-ok');
+
+            msgEl.innerText = message;
+            inputEl.value = '';
+            modal.classList.remove('hidden');
+
+            if (type === 'prompt') {
+                inputEl.classList.remove('hidden');
+                inputEl.value = defaultValue || '';
+                setTimeout(() => inputEl.focus(), 100);
+                titleEl.innerText = "Sila Isi";
+            } else {
+                inputEl.classList.add('hidden');
+            }
+
+            if (type === 'alert') {
+                btnCancel.classList.add('hidden');
+                titleEl.innerText = "Makluman";
+            } else if (type === 'confirm') {
+                btnCancel.classList.remove('hidden');
+                titleEl.innerText = "Pengesahan";
+            }
+
+            btnOk.onclick = () => {
+                modal.classList.add('hidden');
+                if (type === 'prompt') resolve(inputEl.value);
+                else resolve(true);
+            };
+
+            btnCancel.onclick = () => {
+                modal.classList.add('hidden');
+                if (type === 'prompt') resolve(null);
+                else resolve(false);
+            };
+        });
+    },
+    alert: (msg) => window.KetickModal.show('alert', msg),
+    confirm: (msg) => window.KetickModal.show('confirm', msg),
+    prompt: (msg, def) => window.KetickModal.show('prompt', msg, def)
+};
+
 function compressImage(file, callback) {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -36,13 +81,13 @@ function compressImage(file, callback) {
         img.src = event.target.result;
         img.onload = () => {
             const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 400; // Kecilkan saiz
+            const MAX_WIDTH = 400; 
             const scaleSize = MAX_WIDTH / img.width;
             canvas.width = MAX_WIDTH;
             canvas.height = img.height * scaleSize;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            callback(canvas.toDataURL('image/jpeg', 0.5)); // 50% kualiti
+            callback(canvas.toDataURL('image/jpeg', 0.5)); 
         }
     };
 }
@@ -110,7 +155,8 @@ window.openSettings = function() {
     SettingsModule.loadToForm();
 };
 window.closeSettings = function() { document.getElementById('settings-page').classList.add('hidden'); };
-window.saveSettings = function() {
+
+window.saveSettings = async function() {
     SettingsModule.saveBizInfo({
         name: document.getElementById('biz-name').value,
         address: document.getElementById('biz-address').value,
@@ -120,12 +166,13 @@ window.saveSettings = function() {
         accName: document.getElementById('biz-acc-name').value,
         logo: document.getElementById('logo-preview').src 
     });
-    alert("Tetapan disimpan!");
+    await KetickModal.alert("Tetapan berjaya disimpan!");
     window.closeSettings();
     SyncModule.uploadData(); 
 };
-window.previewLogo = function(input) {
-    if (!currentPlanConfig.canUploadLogo) return alert("Pakej tak sokong logo.");
+
+window.previewLogo = async function(input) {
+    if (!currentPlanConfig.canUploadLogo) return await KetickModal.alert("Pakej tak sokong logo.");
     if (input.files && input.files[0]) {
         compressImage(input.files[0], (compressedData) => {
             document.getElementById('logo-preview').src = compressedData;
@@ -133,7 +180,6 @@ window.previewLogo = function(input) {
     }
 };
 
-// --- REFRESH SEMUA UI & RENDER ---
 function refreshAllUI() {
     InventoryModule.renderList('inventory-list');
     POSModule.renderPOSSelect('pos-select-list');
@@ -146,7 +192,6 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
-// --- RENDERING MODULES DENGAN BUTANG EDIT ---
 function renderLHDNExpenses() {
     const container = document.getElementById('lhdn-expenses-list');
     if(!container) return;
@@ -155,7 +200,7 @@ function renderLHDNExpenses() {
     container.innerHTML = expenses.map(e => `
         <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10 mb-2 shadow-sm flex justify-between items-center">
             <div class="flex gap-3 items-center">
-                ${e.img ? `<img src="${e.img}" class="w-10 h-10 rounded-lg object-cover">` : `<div class="w-10 h-10 bg-slate-100 flex items-center justify-center text-[8px] opacity-50">Tiada</div>`}
+                ${e.img ? `<img src="${e.img}" class="w-10 h-10 rounded-lg object-cover">` : `<div class="w-10 h-10 bg-slate-100 dark:bg-black/50 flex items-center justify-center text-[8px] opacity-50">Tiada</div>`}
                 <div><div class="font-bold text-xs">${e.desc}</div><div class="text-[9px] opacity-60">${e.category}</div></div>
             </div>
             <div class="text-right">
@@ -214,7 +259,6 @@ function renderKuponManager() {
     `).join('');
 }
 
-// --- FUNGSI EDIT / DELETE BARU ---
 window.editingProductId = null;
 window.editInventory = function(id) {
     const p = InventoryModule.getProducts().find(x => x.id === id);
@@ -243,53 +287,57 @@ window.editKupon = function(id) {
     }
 };
 
-window.editCustomer = function(id, oldName, oldPhone) {
-    const newName = prompt("Kemaskini Nama:", oldName);
-    const newPhone = prompt("Kemaskini No Telefon:", oldPhone);
-    if(newName && newPhone) { CRMModule.updateCustomerDetails(id, newName, newPhone); refreshAllUI(); }
+window.editCustomer = async function(id, oldName, oldPhone) {
+    const newName = await KetickModal.prompt("Kemaskini Nama:", oldName);
+    if(newName === null) return;
+    const newPhone = await KetickModal.prompt("Kemaskini No Telefon:", oldPhone);
+    if(newPhone === null) return;
+    
+    if(newName && newPhone) { 
+        CRMModule.updateCustomerDetails(id, newName, newPhone); 
+        refreshAllUI(); 
+    }
 };
 
-window.payBuku555 = function(id, currentAmount) {
-    const amt = prompt(`Baki hutang: RM${currentAmount.toFixed(2)}\nMasukkan jumlah bayaran:`);
-    if(amt && !isNaN(amt)) {
+window.payBuku555 = async function(id, currentAmount) {
+    const amt = await KetickModal.prompt(`Baki hutang: RM${currentAmount.toFixed(2)}\nMasukkan jumlah bayaran:`, "");
+    if(amt !== null && amt !== "" && !isNaN(amt)) {
         Buku555Module.payDebt(id, amt);
-        alert("Bayaran direkodkan!");
+        await KetickModal.alert("Bayaran direkodkan!");
         refreshAllUI();
     }
 };
 
-// --- POS & TRANSAKSI (Logik Dibaiki) ---
 window.applyKupon = () => {
     const code = document.getElementById('pos-kupon').value;
     if(code) POSModule.applyKupon(code);
     refreshAllUI();
 };
 
-window.searchCustomer = function() {
+window.searchCustomer = async function() {
     const phone = document.getElementById('pos-phone').value;
-    if(!phone) return alert("Sila masukkan no telefon.");
-    if(!POSModule.setCustomerByPhone(phone, 'pos-name')) alert("Pelanggan baru.");
+    if(!phone) return await KetickModal.alert("Sila masukkan no telefon.");
+    if(!POSModule.setCustomerByPhone(phone, 'pos-name')) await KetickModal.alert("Pelanggan baru.");
 };
 
-window.processTransaction = function(type, printMethod = 'PDF') {
-    if (POSModule.cart.length === 0) return alert("Troli kosong!");
+window.processTransaction = async function(type, printMethod = 'PDF') {
+    if (POSModule.cart.length === 0) return await KetickModal.alert("Troli kosong!");
     const phone = document.getElementById('pos-phone').value;
     const name = document.getElementById('pos-name').value;
     const payMethod = document.getElementById('pos-payment-method').value;
 
-    if (!phone || !name) return alert("Sila isi Nama & No Telefon.");
+    if (!phone || !name) return await KetickModal.alert("Sila isi Nama & No Telefon.");
 
     const crmResult = CRMModule.saveCustomer(name, phone);
-    if (!crmResult.success) return alert(crmResult.msg);
+    if (!crmResult.success) return await KetickModal.alert(crmResult.msg);
 
     let subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
 
-    // Verify balik kupon masa tekan bayar (Takut user buang item dari troli)
     if (POSModule.appliedKupon) {
         const check = KuponModule.verifyKupon(POSModule.appliedKupon, subtotal);
         if(!check.valid) {
             POSModule.appliedKupon = null; POSModule.currentDiscount = 0; refreshAllUI();
-            return alert(`Kupon Batal: ${check.msg}`);
+            return await KetickModal.alert(`Kupon Batal: ${check.msg}`);
         }
         POSModule.currentDiscount = check.discount;
     }
@@ -308,11 +356,8 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     };
 
     if (payMethod === 'HUTANG' && type === 'RECEIPT') Buku555Module.addDebt(crmResult.customer, total, trx.billNo);
-    
-    // Simpan ke sejarah untuk SEMUA jenis
     HistoryModule.saveTransaction(trx);
 
-    // TOLAK STOK & KUPON HANYA JIKA RESIT (Bukan Quotation/Invoice)
     if (type === 'RECEIPT') {
         let prods = InventoryModule.getProducts();
         POSModule.cart.forEach(item => { let p = prods.find(x => x.id === item.id); if(p && p.qty > 0) p.qty--; });
@@ -334,27 +379,32 @@ window.processTransaction = function(type, printMethod = 'PDF') {
     SyncModule.uploadData();
 };
 
-window.cancelBill = () => { if(confirm("Batal transaksi?")) { POSModule.clearCart(); refreshAllUI(); } };
+window.cancelBill = async () => { 
+    if(await KetickModal.confirm("Batalkan transaksi ini?")) { 
+        POSModule.clearCart(); 
+        refreshAllUI(); 
+    } 
+};
 
-// --- LAIN-LAIN ---
 window.filterHistory = () => HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value);
 window.toggleJail = (p) => { WABlastModule.addToJail(p); refreshAllUI(); };
 
-window.addManualCustomer = () => { 
+window.addManualCustomer = async () => { 
     const n = document.getElementById('crm-manual-name').value;
     const p = document.getElementById('crm-manual-phone').value;
-    if(n && p) { CRMModule.saveCustomer(n, p); refreshAllUI(); }
+    if(!n || !p) return await KetickModal.alert("Isi Nama & No Telefon penuh.");
+    CRMModule.saveCustomer(n, p); 
+    refreshAllUI(); 
 };
 
-// Fungsi Baru Import Telefon (Guna Web Contact API)
 window.importPhoneContacts = async () => {
-    alert("Menyemak buku telefon... Sila benarkan akses jika diminta.");
+    await KetickModal.alert("Menyemak buku telefon... Sila benarkan akses jika diminta.");
     const result = await CRMModule.importFromContacts();
     if(result.success) {
-        alert(`Berjaya import ${result.count} pelanggan!`);
+        await KetickModal.alert(`Berjaya import ${result.count} pelanggan!`);
         refreshAllUI();
     } else {
-        alert(result.msg);
+        await KetickModal.alert(result.msg);
     }
 };
 
@@ -371,17 +421,23 @@ window.createNewKupon = () => {
     refreshAllUI();
 };
 
-window.deleteExpense = (id) => { if(confirm("Padam?")) { LHDNModule.deleteExpense(id); refreshAllUI(); } };
-window.saveNewExpense = function() {
+window.deleteExpense = async (id) => { 
+    if(await KetickModal.confirm("Padam perbelanjaan ini?")) { 
+        LHDNModule.deleteExpense(id); 
+        refreshAllUI(); 
+    } 
+};
+
+window.saveNewExpense = async function() {
     const desc = document.getElementById('exp-desc').value;
     const amount = document.getElementById('exp-amount').value;
     const cat = document.getElementById('exp-cat').value;
     const imgInput = document.getElementById('exp-img');
-    if(!desc || !amount) return alert("Sila isi butiran.");
+    if(!desc || !amount) return await KetickModal.alert("Sila isi butiran perbelanjaan.");
 
-    const processSave = (imgData = null) => {
+    const processSave = async (imgData = null) => {
         LHDNModule.saveExpense(desc, amount, cat, imgData);
-        alert("Perbelanjaan direkodkan!");
+        await KetickModal.alert("Perbelanjaan direkodkan!");
         document.getElementById('lhdn-expense-form').reset();
         refreshAllUI();
     };
@@ -390,25 +446,29 @@ window.saveNewExpense = function() {
     } else { processSave(); }
 };
 
-window.generateTaxReport = (type) => {
-    const val = (type === 'MONTH') ? prompt("Bulan (MM-YYYY):", "04-2026") : prompt("Tahun (YYYY):", "2026");
-    if(val) LHDNModule.downloadTaxReport(type, val);
+window.generateTaxReport = async (type) => {
+    const val = (type === 'MONTH') ? await KetickModal.prompt("Bulan (MM-YYYY):", "04-2026") : await KetickModal.prompt("Tahun (YYYY):", "2026");
+    if(val !== null && val !== "") LHDNModule.downloadTaxReport(type, val);
 };
 window.generateEInvoiceJSON = (billNo) => LHDNModule.generateEInvoiceJSON(billNo);
 
-// WA BLAST
-window.startWABlast = function() {
+window.startWABlast = async function() {
     const msg = document.getElementById('blast-msg').value;
-    if(!msg) return alert("Isi mesej.");
+    if(!msg) return await KetickModal.alert("Isi mesej terlebih dahulu.");
     const queue = WABlastModule.generateBlastLinks(msg);
     document.getElementById('blast-status-display').innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white">HANTAR ${i+1}: ${q.name}</a>`).join('');
 };
+
 window.startTurboBlast = async function() {
     const msg = document.getElementById('blast-msg').value;
     const delay = parseInt(document.getElementById('blast-delay').value);
     const queue = WABlastModule.generateTurboLinks(msg);
-    if(confirm(`Mula Turbo Blast untuk ${queue.length} orang?`)) {
-        for (let i = 0; i < queue.length; i++) { window.open(queue[i].link, '_blank'); await new Promise(r => setTimeout(r, delay * 1000)); }
+    if(await KetickModal.confirm(`Mula Turbo Blast untuk ${queue.length} orang? Pastikan extension aktif.`)) {
+        for (let i = 0; i < queue.length; i++) { 
+            window.open(queue[i].link, '_blank'); 
+            await new Promise(r => setTimeout(r, delay * 1000)); 
+        }
+        await KetickModal.alert("Semua mesej dihantar!");
     }
 };
 
@@ -422,11 +482,11 @@ function setupEventListeners() {
                 desc: document.getElementById('p-desc').value,
                 price: document.getElementById('p-price').value,
                 qty: document.getElementById('p-qty').value,
-                img: "https://via.placeholder.com/150" // Fallback asal
+                img: "https://via.placeholder.com/150" 
             };
             
             const fileInput = document.getElementById('p-img');
-            const processAdd = (imgData) => {
+            const processAdd = async (imgData) => {
                 formData.img = imgData;
                 if(window.editingProductId) {
                     let prods = InventoryModule.getProducts();
@@ -434,9 +494,10 @@ function setupEventListeners() {
                     if(idx > -1) { prods[idx] = {...prods[idx], ...formData}; InventoryModule.saveProducts(prods); }
                     window.editingProductId = null;
                     document.getElementById('btn-save-inv').innerText = "SIMPAN DATA";
-                    alert("Produk dikemaskini!");
+                    await KetickModal.alert("Produk dikemaskini!");
                 } else {
-                    InventoryModule.addProduct(formData, currentPlanConfig, () => { alert("Produk Ditambah!"); });
+                    InventoryModule.addProduct(formData, currentPlanConfig, () => {});
+                    await KetickModal.alert("Produk Ditambah!");
                 }
                 form.reset(); refreshAllUI();
             };
@@ -444,7 +505,6 @@ function setupEventListeners() {
             if (fileInput.files && fileInput.files[0]) {
                 compressImage(fileInput.files[0], processAdd);
             } else {
-                // Kekalkan imej lama jika sedang edit dan tak upload baru
                 if(window.editingProductId) {
                     const oldP = InventoryModule.getProducts().find(x => x.id === window.editingProductId);
                     processAdd(oldP ? oldP.img : formData.img);
