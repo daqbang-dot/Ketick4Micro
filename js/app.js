@@ -110,7 +110,6 @@ function initApp() {
     refreshAllUI();
     setupEventListeners();
     
-    // Tanam penderia ketukan Dev Panel di sini
     setupDevTrigger();
 }
 
@@ -206,8 +205,8 @@ window.closePricingPage = function() {
 };
 
 window.buyPlan = function(planName) {
-    // Tukar "60123456789" kepada nombor WhatsApp rasmi Ketick bos
-    const phoneNo = "60123456789"; 
+    // Tukar "601123266755" kepada nombor WhatsApp rasmi Ketick bos
+    const phoneNo = "601123266755"; 
     const message = encodeURIComponent(`Salam Admin Ketick, saya berminat nak langgan pakej ${planName}. Boleh berikan detail pembayaran?`);
     window.open(`https://api.whatsapp.com/send?phone=${phoneNo}&text=${message}`, '_blank');
 };
@@ -254,7 +253,6 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
-// --- GATEKEEPER UI (PENGUNCI PAPARAN VISUAL) ---
 const lockMsg = (modul) => `<div class="opacity-50 text-xs text-center py-10 text-slate-500 dark:text-white">🔒 Pakej ${currentPlanConfig.planName} tidak menyokong ${modul}.<br><br>Sila hubungi pembekal untuk naik taraf.</div>`;
 
 function renderLHDNExpenses() {
@@ -331,8 +329,6 @@ function renderKuponManager() {
         </div>
     `).join('');
 }
-
-// --- GATEKEEPER FUNGSI (PENGUNCI BUTANG LOGIK) ---
 
 window.editingProductId = null;
 window.editInventory = function(id) {
@@ -639,7 +635,6 @@ function setupEventListeners() {
     }
 }
 
-// --- FUNGSI PENDERIA KETUKAN DEV PANEL (10 KALI) ---
 function setupDevTrigger() {
     let devTapCount = 0;
     let devTapTimer;
@@ -653,7 +648,6 @@ function setupDevTrigger() {
             devTapCount++;
             clearTimeout(devTapTimer);
             
-            // Reset kalau tak ketuk dalam masa 3 saat
             devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);
 
             if(devTapCount >= 10) { // Ketuk 10 kali laju-laju
@@ -671,9 +665,6 @@ function setupDevTrigger() {
     }
 }
 
-// =======================================================
-// ALAT SULIT ADMIN (UNTUK AWAK GENERATE KUNCI LESEN)
-// =======================================================
 window.AdminGenerateKey = async function(planName, days) {
     const newKey = LicenseModule.generateKey(planName, days);
     console.log(`%c[KUNCI RAHSIA KETICK]`, `color: yellow; font-size: 16px; font-weight: bold;`);
