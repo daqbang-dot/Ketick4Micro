@@ -229,9 +229,14 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
+// --- GATEKEEPER UI (PENGUNCI PAPARAN VISUAL) ---
+const lockMsg = (modul) => `<div class="opacity-50 text-xs text-center py-10 text-slate-500 dark:text-white">🔒 Pakej ${currentPlanConfig.planName} tidak menyokong ${modul}.<br><br>Sila hubungi pembekal untuk naik taraf.</div>`;
+
 function renderLHDNExpenses() {
     const container = document.getElementById('lhdn-expenses-list');
     if(!container) return;
+    if(!currentPlanConfig.enableLHDN) return container.innerHTML = lockMsg("Modul LHDN / Cukai");
+    
     const expenses = LHDNModule.getExpenses();
     if(expenses.length === 0) return container.innerHTML = `<div class="text-xs text-center opacity-50 py-4">Tiada rekod perbelanjaan.</div>`;
     container.innerHTML = expenses.map(e => `
@@ -251,6 +256,8 @@ function renderLHDNExpenses() {
 function renderCRM() {
     const container = document.getElementById('crm-list');
     if(!container) return;
+    if(!currentPlanConfig.enableCRM) return container.innerHTML = lockMsg("Modul CRM");
+
     const customers = CRMModule.getCustomers();
     container.innerHTML = customers.map(c => `
         <div class="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-2xl flex justify-between items-center mb-2">
@@ -266,6 +273,8 @@ function renderCRM() {
 function renderBuku555() {
     const container = document.getElementById('buku555-list');
     if(!container) return;
+    if(!currentPlanConfig.enableBuku555) return container.innerHTML = lockMsg("Buku 555 (Hutang)");
+
     const debts = Buku555Module.getDebts();
     container.innerHTML = debts.map(d => `
         <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-2xl border border-red-100 dark:border-red-500/20 flex justify-between items-center mb-2">
@@ -281,6 +290,8 @@ function renderBuku555() {
 function renderKuponManager() {
     const container = document.getElementById('kupon-manager-list');
     if(!container) return;
+    if(!currentPlanConfig.enableKupon) return container.innerHTML = lockMsg("Pengurusan Kupon");
+
     const kupons = KuponModule.getKupons();
     container.innerHTML = kupons.map(k => `
         <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center mb-2 shadow-sm">
@@ -295,6 +306,8 @@ function renderKuponManager() {
         </div>
     `).join('');
 }
+
+// --- GATEKEEPER FUNGSI (PENGUNCI BUTANGT LOGIK) ---
 
 window.editingProductId = null;
 window.editInventory = function(id) {
@@ -311,7 +324,8 @@ window.editInventory = function(id) {
 };
 
 window.editingKuponId = null;
-window.editKupon = function(id) {
+window.editKupon = async function(id) {
+    if(!currentPlanConfig.enableKupon) return await KetickModal.alert("Pakej anda tidak menyokong Kupon.");
     const k = KuponModule.getKupons().find(x => x.id === id);
     if(k) {
         document.getElementById('kp-code').value = k.code;
@@ -325,9 +339,10 @@ window.editKupon = function(id) {
 };
 
 window.editCustomer = async function(id, oldName, oldPhone) {
+    if(!currentPlanConfig.enableCRM) return await KetickModal.alert("Pakej anda tidak menyokong CRM.");
     const newName = await KetickModal.prompt("Kemaskini Nama:", oldName);
     if(newName === null) return;
-    const newPhone = await KetickModal.prompt("Kemaskini No Telefon (Sistem akan auto-format):", oldPhone);
+    const newPhone = await KetickModal.prompt("Kemaskini No Telefon (Sistem auto-format):", oldPhone);
     if(newPhone === null) return;
     
     if(newName && newPhone) { 
@@ -337,6 +352,7 @@ window.editCustomer = async function(id, oldName, oldPhone) {
 };
 
 window.payBuku555 = async function(id, currentAmount) {
+    if(!currentPlanConfig.enableBuku555) return await KetickModal.alert("Pakej tidak menyokong Buku 555.");
     const amt = await KetickModal.prompt(`Baki hutang: RM${currentAmount.toFixed(2)}\nMasukkan jumlah bayaran:`, "");
     if(amt !== null && amt !== "" && !isNaN(amt)) {
         Buku555Module.payDebt(id, amt);
@@ -345,7 +361,8 @@ window.payBuku555 = async function(id, currentAmount) {
     }
 };
 
-window.applyKupon = () => {
+window.applyKupon = async () => {
+    if(!currentPlanConfig.enableKupon) return await KetickModal.alert("Fungsi Kupon dikunci untuk pakej anda.");
     const code = document.getElementById('pos-kupon').value;
     if(code) POSModule.applyKupon(code);
     refreshAllUI();
@@ -364,6 +381,10 @@ window.processTransaction = async function(type, printMethod = 'PDF') {
     const payMethod = document.getElementById('pos-payment-method').value;
 
     if (!phone || !name) return await KetickModal.alert("Sila isi Nama & No Telefon.");
+    
+    if (payMethod === 'HUTANG' && !currentPlanConfig.enableBuku555) {
+        return await KetickModal.alert("Pakej anda tidak menyokong transaksi HUTANG (Buku 555). Sila guna kaedah Tunai/Transfer.");
+    }
 
     const crmResult = CRMModule.saveCustomer(name, phone);
     if (!crmResult.success) return await KetickModal.alert(crmResult.msg);
@@ -424,9 +445,13 @@ window.cancelBill = async () => {
 };
 
 window.filterHistory = () => HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value);
-window.toggleJail = (p) => { WABlastModule.addToJail(p); refreshAllUI(); };
+window.toggleJail = async (p) => { 
+    if(!currentPlanConfig.enableWABlast) return await KetickModal.alert("Pakej tidak menyokong fungsi Jail.");
+    WABlastModule.addToJail(p); refreshAllUI(); 
+};
 
 window.addManualCustomer = async () => { 
+    if(!currentPlanConfig.enableCRM) return await KetickModal.alert("Modul CRM dikunci.");
     const n = document.getElementById('crm-manual-name').value;
     const p = document.getElementById('crm-manual-phone').value;
     if(!n || !p) return await KetickModal.alert("Sila isi Nama & No Telefon.");
@@ -435,6 +460,7 @@ window.addManualCustomer = async () => {
 };
 
 window.importPhoneContacts = async () => {
+    if(!currentPlanConfig.enableCRM) return await KetickModal.alert("Fungsi Import dikunci.");
     await KetickModal.alert("Menyemak buku telefon... Sila benarkan akses jika diminta.");
     const result = await CRMModule.importFromContacts();
     if(result.success) {
@@ -445,7 +471,8 @@ window.importPhoneContacts = async () => {
     }
 };
 
-window.createNewKupon = () => {
+window.createNewKupon = async () => {
+    if(!currentPlanConfig.enableKupon) return await KetickModal.alert("Pakej anda tidak menyokong Kupon.");
     const data = { code: document.getElementById('kp-code').value, type: document.getElementById('kp-type').value, value: document.getElementById('kp-value').value, minSpend: document.getElementById('kp-min').value, qty: document.getElementById('kp-qty').value };
     if(window.editingKuponId) {
         KuponModule.updateKupon(window.editingKuponId, data);
@@ -466,6 +493,7 @@ window.deleteExpense = async (id) => {
 };
 
 window.saveNewExpense = async function() {
+    if(!currentPlanConfig.enableLHDN) return await KetickModal.alert("Modul LHDN dikunci.");
     const desc = document.getElementById('exp-desc').value;
     const amount = document.getElementById('exp-amount').value;
     const cat = document.getElementById('exp-cat').value;
@@ -484,12 +512,17 @@ window.saveNewExpense = async function() {
 };
 
 window.generateTaxReport = async (type) => {
+    if(!currentPlanConfig.enableLHDN) return await KetickModal.alert("Fungsi Export LHDN dikunci.");
     const val = (type === 'MONTH') ? await KetickModal.prompt("Bulan (MM-YYYY):", "04-2026") : await KetickModal.prompt("Tahun (YYYY):", "2026");
     if(val !== null && val !== "") LHDNModule.downloadTaxReport(type, val);
 };
-window.generateEInvoiceJSON = (billNo) => LHDNModule.generateEInvoiceJSON(billNo);
+window.generateEInvoiceJSON = async (billNo) => {
+    if(!currentPlanConfig.enableLHDN) return await KetickModal.alert("E-Invoice dikunci.");
+    LHDNModule.generateEInvoiceJSON(billNo);
+}
 
 window.startWABlast = async function() {
+    if(!currentPlanConfig.enableWABlast) return await KetickModal.alert("WA Blast dikunci.");
     const msg = document.getElementById('blast-msg').value;
     if(!msg) return await KetickModal.alert("Isi mesej terlebih dahulu.");
     const queue = WABlastModule.generateBlastLinks(msg);
@@ -497,6 +530,7 @@ window.startWABlast = async function() {
 };
 
 window.startTurboBlast = async function() {
+    if(!currentPlanConfig.enableWABlast) return await KetickModal.alert("WA Turbo dikunci.");
     const msg = document.getElementById('blast-msg').value;
     const delay = parseInt(document.getElementById('blast-delay').value);
     const queue = WABlastModule.generateTurboLinks(msg);
@@ -555,8 +589,6 @@ function setupEventListeners() {
 
 // =======================================================
 // ALAT SULIT ADMIN (UNTUK AWAK GENERATE KUNCI LESEN)
-// Buka 'Developer Tools > Console' di browser dan taip:
-// AdminGenerateKey('LEGEND', 30)
 // =======================================================
 window.AdminGenerateKey = async function(planName, days) {
     const newKey = LicenseModule.generateKey(planName, days);
@@ -564,7 +596,6 @@ window.AdminGenerateKey = async function(planName, days) {
     console.log(`Pelan: ${planName} | Tempoh: ${days} Hari`);
     console.log(`KUNCI: ${newKey}`);
     
-    // Pakai prompt biasa supaya senang Admin copy dari skrin telefon
     prompt(`Kunci untuk pelan ${planName} (${days} Hari) berjaya dijana. Sila copy kod di bawah:`, newKey);
 };
 
