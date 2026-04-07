@@ -20,9 +20,8 @@ import { LHDNModule } from '../modules/lhdn.js';
 import { LicenseModule } from '../modules/license.js';
 
 let currentPlanConfig = BasicPlan; 
-let isDevMode = false; // Diubah kepada false supaya Dev Panel ghaib
+let isDevMode = false; 
 
-// --- ENJIN CUSTOM MODAL (GLASSMORPHISM) ---
 window.KetickModal = {
     show: function(type, message, defaultValue = '') {
         return new Promise((resolve) => {
@@ -72,9 +71,6 @@ window.KetickModal = {
     prompt: (msg, def) => window.KetickModal.show('prompt', msg, def)
 };
 
-// =======================================================
-// TRIK NINJA: HIJACK SEMUA ALERT DARI FAIL LAIN!
-// =======================================================
 window.alert = function(message) {
     KetickModal.alert(message);
 };
@@ -109,7 +105,6 @@ function initApp() {
     document.getElementById('next-bill-no-display').innerText = `#${POSModule.nextBillNo}`;
     refreshAllUI();
     setupEventListeners();
-    
     setupDevTrigger();
 }
 
@@ -195,7 +190,6 @@ window.switchTab = function(tabId) {
     refreshAllUI();
 };
 
-// --- FUNGSI HALAMAN PAKEJ (PRICING) ---
 window.openPricingPage = function() {
     document.getElementById('pricing-page').classList.remove('hidden');
 };
@@ -205,10 +199,20 @@ window.closePricingPage = function() {
 };
 
 window.buyPlan = function(planName) {
-    // Tukar "601123266755" kepada nombor WhatsApp rasmi Ketick bos
-    const phoneNo = "601123266755"; 
-    const message = encodeURIComponent(`Salam Admin Ketick, saya berminat nak langgan pakej ${planName}. Boleh berikan detail pembayaran?`);
-    window.open(`https://api.whatsapp.com/send?phone=${phoneNo}&text=${message}`, '_blank');
+    let paymentLink = "";
+    if (planName === "PRO") {
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO";
+    } else if (planName === "PREMIUM") {
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPREMIUM";
+    } else if (planName === "LEGEND") {
+        paymentLink = "https://toyyibpay.com/Ketick4MicroLEGEND";
+    }
+    
+    if(paymentLink) {
+        window.open(paymentLink, '_blank');
+    } else {
+        KetickModal.alert("Ralat sistem: Pautan bayaran tidak dijumpai.");
+    }
 };
 
 window.openSettings = function() {
@@ -388,7 +392,6 @@ window.applyKupon = async () => {
     const code = document.getElementById('pos-kupon').value.trim();
     if(!code) return await KetickModal.alert("Sila taip kod kupon.");
     
-    // Kita buat pengiraan terus dalam app.js (Bypass pos.js yg ada alert hodoh)
     let subtotal = POSModule.cart.reduce((sum, item) => sum + item.price, 0);
     const check = KuponModule.verifyKupon(code, subtotal);
     
@@ -396,7 +399,7 @@ window.applyKupon = async () => {
         POSModule.appliedKupon = null; 
         POSModule.currentDiscount = 0; 
         refreshAllUI();
-        return await KetickModal.alert(`Gagal: ${check.msg}`); // Modal cantik keluar!
+        return await KetickModal.alert(`Gagal: ${check.msg}`); 
     }
     
     POSModule.appliedKupon = code;
@@ -406,10 +409,9 @@ window.applyKupon = async () => {
 };
 
 window.searchCustomer = async function() {
-    const phone = document.getElementById('pos-phone').value.trim(); // Buang space
+    const phone = document.getElementById('pos-phone').value.trim(); 
     if(!phone) return await KetickModal.alert("Sila masukkan no telefon.");
     
-    // Carian "Kebal": Tukar semua ke String supaya takde isu nombor tak jumpa
     const customers = CRMModule.getCustomers();
     const found = customers.find(c => String(c.phone).trim() === String(phone));
     
@@ -639,22 +641,20 @@ function setupDevTrigger() {
     let devTapCount = 0;
     let devTapTimer;
     
-    // Kita guna elemen 'auth-status' (tulisan BASIC/LEGEND MODE tu) sebagai trigger
     const devTrigger = document.getElementById('auth-status');
     
     if(devTrigger) {
-        devTrigger.style.cursor = "pointer"; // Biar bos tahu boleh tekan
+        devTrigger.style.cursor = "pointer"; 
         devTrigger.addEventListener('click', () => {
             devTapCount++;
             clearTimeout(devTapTimer);
             
             devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);
 
-            if(devTapCount >= 10) { // Ketuk 10 kali laju-laju
+            if(devTapCount >= 10) { 
                 devTapCount = 0;
                 if(!isDevMode) {
                     isDevMode = true;
-                    // Panggil fungsi Dev Tools secara manual
                     import('./dev-tools.js').then(module => {
                         module.initDevTools(currentPlanConfig);
                         KetickModal.alert("DEV_PANEL: ACTIVATED 🛠️");
@@ -667,11 +667,7 @@ function setupDevTrigger() {
 
 window.AdminGenerateKey = async function(planName, days) {
     const newKey = LicenseModule.generateKey(planName, days);
-    console.log(`%c[KUNCI RAHSIA KETICK]`, `color: yellow; font-size: 16px; font-weight: bold;`);
-    console.log(`Pelan: ${planName} | Tempoh: ${days} Hari`);
-    console.log(`KUNCI: ${newKey}`);
-    
-    prompt(`Kunci untuk pelan ${planName} (${days} Hari) berjaya dijana. Sila copy kod di bawah:`, newKey);
+    prompt(`Key:`, newKey);
 };
 
 window.onload = initApp;
