@@ -20,7 +20,7 @@ import { LHDNModule } from '../modules/lhdn.js';
 import { LicenseModule } from '../modules/license.js';
 
 let currentPlanConfig = BasicPlan; 
-let isDevMode = true; 
+let isDevMode = false; // Diubah kepada false supaya Dev Panel ghaib
 
 // --- ENJIN CUSTOM MODAL (GLASSMORPHISM) ---
 window.KetickModal = {
@@ -102,7 +102,9 @@ function initApp() {
     document.getElementById('next-bill-no-display').innerText = `#${POSModule.nextBillNo}`;
     refreshAllUI();
     setupEventListeners();
-    if(isDevMode) setTimeout(() => initDevTools(currentPlanConfig), 500); 
+    
+    // Tanam penderia ketukan Dev Panel di sini
+    setupDevTrigger();
 }
 
 function checkLicenseSystem() {
@@ -584,6 +586,38 @@ function setupEventListeners() {
                 }
             }
         };
+    }
+}
+
+// --- FUNGSI PENDERIA KETUKAN DEV PANEL (10 KALI) ---
+function setupDevTrigger() {
+    let devTapCount = 0;
+    let devTapTimer;
+    
+    // Kita guna elemen 'auth-status' (tulisan BASIC/LEGEND MODE tu) sebagai trigger
+    const devTrigger = document.getElementById('auth-status');
+    
+    if(devTrigger) {
+        devTrigger.style.cursor = "pointer"; // Biar bos tahu boleh tekan
+        devTrigger.addEventListener('click', () => {
+            devTapCount++;
+            clearTimeout(devTapTimer);
+            
+            // Reset kalau tak ketuk dalam masa 3 saat
+            devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);
+
+            if(devTapCount >= 10) { // Ketuk 10 kali laju-laju
+                devTapCount = 0;
+                if(!isDevMode) {
+                    isDevMode = true;
+                    // Panggil fungsi Dev Tools secara manual
+                    import('./dev-tools.js').then(module => {
+                        module.initDevTools(currentPlanConfig);
+                        KetickModal.alert("DEV_PANEL: ACTIVATED 🛠️");
+                    });
+                }
+            }
+        });
     }
 }
 
