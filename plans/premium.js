@@ -1,15 +1,15 @@
 export const Premium = {
     planName: 'PREMIUM',
-    maxProducts: 100,
+    maxProducts: 50,
     canUploadLogo: true,
-    hasWatermark: false,
+    hasWatermark: true,
     enableWhatsAppReceipt: true,
     enableSalesReports: true,
     // MODUL BARU
     enableCRM: true,
     enableKupon: true,
     enableLHDN: false,
-    enableWABlast: true,
+    enableWABlast: false,
     enableBluetoothPrint: true,
-    enableBuku555: false
+    enableBuku555: true
 };
