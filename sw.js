@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ketick-pwa-v12';
+const CACHE_NAME = 'ketick-pwa-v13';
 
 // Senarai fail asas yang wajib disimpan dalam telefon (Cache)
 const urlsToCache = [
