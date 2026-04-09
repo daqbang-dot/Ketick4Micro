@@ -48,10 +48,19 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 10px; }
+        
+        /* Animasi Transisi Tab & Toast */
+        .fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="p-4 mx-auto max-w-lg min-h-screen">
+<body class="p-4 mx-auto max-w-lg min-h-screen relative">
     
+    <div id="toast-container" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[99999] flex flex-col gap-2 pointer-events-none w-full max-w-xs px-4"></div>
+
     <header class="flex justify-between items-center mb-2 pt-2">
         <h1 id="secret-trigger" class="text-2xl font-bold tracking-tight text-white lowercase">
             ketick<span class="text-lime text-3xl leading-none">.</span>
@@ -63,7 +72,6 @@
                 </svg>
                 Naik Taraf
             </button>
-            
             <button onclick="openSettings()" class="bg-darkCard p-2 rounded-lg border border-darkBorder hover:bg-[#252525] transition text-gray-400 hover:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
@@ -177,7 +185,7 @@
             </nav>
         </div>
 
-        <div id="tab-dash" class="tab-content hidden pb-10">
+        <div id="tab-dash" class="tab-content fade-in-up hidden pb-10">
             <div id="dashboard-container"></div>
             <div class="bg-darkCard border border-darkBorder p-5 rounded-xl mt-6 shadow-sm">
                 <h2 class="text-xs font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Data Kupon Diskaun</h2>
@@ -201,7 +209,7 @@
             </div>
         </div>
 
-        <div id="tab-pos" class="tab-content pb-10">
+        <div id="tab-pos" class="tab-content fade-in-up pb-10">
             <div class="flex flex-col gap-4">
                 <div class="bg-darkCard p-4 rounded-xl border border-darkBorder shadow-sm relative overflow-hidden">
                     <div class="absolute top-0 right-0 bg-indigo/20 text-indigo text-[8px] px-2 py-1 rounded-bl-lg font-bold uppercase">Wajib Isi</div>
@@ -259,7 +267,7 @@
             </div>
         </div>
 
-        <div id="tab-crm" class="tab-content hidden pb-10">
+        <div id="tab-crm" class="tab-content fade-in-up hidden pb-10">
             <div class="bg-darkCard border border-indigo/50 p-5 rounded-xl mb-6 shadow-sm">
                 <h2 class="text-xs font-bold mb-3 text-indigo uppercase tracking-widest">Pusat Operasi WA Blast</h2>
                 <textarea id="blast-msg" placeholder="Mesej anda... Guna [NAMA] untuk personalisasi." class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs h-24 outline-none mb-3 focus:border-indigo"></textarea>
@@ -294,12 +302,12 @@
             <div id="crm-list" class="space-y-1"></div>
         </div>
 
-        <div id="tab-555" class="tab-content hidden pb-10">
+        <div id="tab-555" class="tab-content fade-in-up hidden pb-10">
             <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase tracking-widest text-orange">Log Pemiutang (Buku 555)</h2>
             <div id="buku555-list" class="space-y-2"></div>
         </div>
 
-        <div id="tab-inventory" class="tab-content hidden pb-10">
+        <div id="tab-inventory" class="tab-content fade-in-up hidden pb-10">
             <section class="mb-8">
                 <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-sm">
                     <h2 class="text-[10px] font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Input Data Produk</h2>
@@ -321,7 +329,7 @@
             </section>
         </div>
 
-        <div id="tab-lhdn" class="tab-content hidden pb-10">
+        <div id="tab-lhdn" class="tab-content fade-in-up hidden pb-10">
             <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-sm mb-6">
                 <h2 class="text-[10px] font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Log Perbelanjaan Bisnes</h2>
                 <form id="lhdn-expense-form" class="space-y-3" onsubmit="event.preventDefault(); saveNewExpense();">
@@ -357,7 +365,7 @@
             </div>
         </div>
 
-        <div id="tab-history" class="tab-content hidden pb-10">
+        <div id="tab-history" class="tab-content fade-in-up hidden pb-10">
             <div class="bg-darkCard p-3 rounded-xl border border-darkBorder mb-6 shadow-sm">
                 <input type="text" id="history-search" oninput="filterHistory()" placeholder="Cari Nama / No Tel / Tarikh / #Bil" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary font-mono">
             </div>
