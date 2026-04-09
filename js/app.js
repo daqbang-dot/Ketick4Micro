@@ -22,7 +22,6 @@ import { LicenseModule } from '../modules/license.js';
 let currentPlanConfig = BasicPlan; 
 let isDevMode = false; 
 
-// --- UX PWA INSTALLER ---
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -44,7 +43,6 @@ window.installApp = async function() {
     }
 };
 
-// --- UX KETICK OS: AUDIO ENGINE (Beep & Cha-ching) ---
 const AudioEngine = {
     ctx: null,
     init: function() {
@@ -136,7 +134,6 @@ window.KetickModal = {
     confirm: (msg) => window.KetickModal.show('confirm', msg),
     prompt: (msg, def) => window.KetickModal.show('prompt', msg, def),
     
-    // --- UX KETICK OS: TOAST NOTIFICATION ---
     toast: function(msg, type = 'success') {
         const container = document.getElementById('toast-container');
         if(!container) return;
@@ -259,7 +256,6 @@ function setPlan(planName) {
     else currentPlanConfig = BasicPlan;
     document.getElementById('auth-status').innerText = `${currentPlanConfig.planName} MODE`;
     
-    // Logik Butang PWA Install
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
     const installBtn = document.getElementById('pwa-install-btn');
     if (installBtn) {
@@ -307,11 +303,11 @@ window.closePricingPage = function() {
 window.buyPlan = function(planName) {
     let paymentLink = "";
     if (planName === "PRO") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO-monthly";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO";
     } else if (planName === "PREMIUM") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroPREMIUM-monthly";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPREMIUM";
     } else if (planName === "LEGEND") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroLEGEND-monthly";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroLEGEND";
     }
     
     if(paymentLink) {
@@ -349,6 +345,49 @@ window.previewLogo = async function(input) {
             document.getElementById('logo-preview').src = compressedData;
         });
     }
+};
+
+// --- FUNGSI PORTAL PENGGUNA (AKAUN & SUPPORT) ---
+window.openAccountPage = function() {
+    const lic = LicenseModule.checkStatus();
+    document.getElementById('account-page').classList.remove('hidden');
+
+    const planNameEl = document.getElementById('acc-plan-name');
+    const daysLeftEl = document.getElementById('acc-days-left');
+
+    if(lic.status === 'BASIC' || lic.status === 'LOCKED') {
+        planNameEl.innerText = "BASIC MODE";
+        daysLeftEl.innerText = "Tiada Lesen Aktif";
+        daysLeftEl.className = "text-lg font-bold text-gray-500 font-mono";
+    } else {
+        planNameEl.innerText = `PAKEJ ${lic.status}`;
+        // Kira baki hari
+        const expDate = new Date(lic.expiryDate);
+        const today = new Date();
+        const diffTime = expDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        daysLeftEl.innerText = `${diffDays > 0 ? diffDays : 0} Hari Lagi`;
+        
+        // Tukar warna ikut baki hari
+        if(diffDays > 14) {
+            daysLeftEl.className = "text-lg font-bold text-lime font-mono";
+        } else if (diffDays > 3) {
+            daysLeftEl.className = "text-lg font-bold text-orange font-mono";
+        } else {
+            daysLeftEl.className = "text-lg font-bold text-red-500 font-mono animate-pulse";
+        }
+    }
+};
+
+window.closeAccountPage = function() {
+    document.getElementById('account-page').classList.add('hidden');
+};
+
+window.contactSupport = function() {
+    const phoneNo = "601123266755"; 
+    const msg = encodeURIComponent("Salam Admin Ketick. Saya pengguna Ketick4Micro dan saya perlukan sedikit bantuan teknikal berkenaan sistem.");
+    window.open(`https://api.whatsapp.com/send?phone=${phoneNo}&text=${msg}`, '_blank');
 };
 
 function refreshAllUI() {
