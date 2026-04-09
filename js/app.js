@@ -307,11 +307,11 @@ window.closePricingPage = function() {
 window.buyPlan = function(planName) {
     let paymentLink = "";
     if (planName === "PRO") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO-Montly";
     } else if (planName === "PREMIUM") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroPREMIUM";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPREMIUM-monthly";
     } else if (planName === "LEGEND") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroLEGEND";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroLEGEND-monthly";
     }
     
     if(paymentLink) {
