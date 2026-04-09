@@ -1,15 +1,15 @@
 export const ProPlan = {
     planName: 'PRO',
-    maxProducts: 50,
+    maxProducts: 20,
     canUploadLogo: true,
     hasWatermark: true,
     enableWhatsAppReceipt: true,
     enableSalesReports: true,
     // MODUL BARU
     enableCRM: false,
-    enableKupon: false,
+    enableKupon: true,
     enableLHDN: false,
-    enableWABlast: true,
+    enableWABlast: false,
     enableBluetoothPrint: false,
     enableBuku555: false
 };
