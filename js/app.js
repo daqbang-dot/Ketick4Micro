@@ -22,6 +22,28 @@ import { LicenseModule } from '../modules/license.js';
 let currentPlanConfig = BasicPlan; 
 let isDevMode = false; 
 
+// --- UX PWA INSTALLER ---
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    setPlan(currentPlanConfig.planName); 
+});
+
+window.installApp = async function() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            KetickModal.toast("Terima kasih memasang KETICK!");
+        }
+        deferredPrompt = null;
+        document.getElementById('pwa-install-btn')?.classList.add('hidden');
+    } else {
+        KetickModal.alert("Untuk install di iOS/iPhone: Tekan butang 'Share' (petak ada anak panah atas) di browser anda, kemudian pilih 'Add to Home Screen'.");
+    }
+};
+
 // --- UX KETICK OS: AUDIO ENGINE (Beep & Cha-ching) ---
 const AudioEngine = {
     ctx: null,
@@ -41,7 +63,7 @@ const AudioEngine = {
             gain.connect(this.ctx.destination);
             osc.type = 'sine';
             osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-            gain.gain.setValueAtTime(0.05, this.ctx.currentTime); // Sangat perlahan & tak bingit
+            gain.gain.setValueAtTime(0.05, this.ctx.currentTime); 
             gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
             osc.start();
             osc.stop(this.ctx.currentTime + 0.1);
@@ -127,9 +149,7 @@ window.KetickModal = {
         
         container.appendChild(el);
         
-        // Animate In
         setTimeout(() => { el.classList.remove('translate-y-10', 'opacity-0'); }, 10);
-        // Animate Out
         setTimeout(() => {
             el.classList.add('translate-y-10', 'opacity-0');
             setTimeout(() => el.remove(), 300);
@@ -170,13 +190,9 @@ function initApp() {
     setupEventListeners();
     setupDevTrigger();
     
-    // --- UX KETICK OS: GLOBAL HAPTIC PADA SEMUA BUTANG ---
     document.body.addEventListener('click', (e) => {
-        // Kesan klik pada mana-mana butang atau elemen tab/produk
         if(e.target.closest('button') || e.target.closest('.pos-item-btn') || e.target.closest('.tab-btn')) {
-            // Getaran Halus (Haptic)
             if(navigator.vibrate) navigator.vibrate(15);
-            // Bunyi Beep (Init Audio)
             AudioEngine.playBeep();
         }
     });
@@ -242,12 +258,23 @@ function setPlan(planName) {
     else if (planName === 'PRO') currentPlanConfig = ProPlan;
     else currentPlanConfig = BasicPlan;
     document.getElementById('auth-status').innerText = `${currentPlanConfig.planName} MODE`;
+    
+    // Logik Butang PWA Install
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+        if (currentPlanConfig.planName === 'BASIC' && !isStandalone) {
+            installBtn.classList.remove('hidden');
+        } else {
+            installBtn.classList.add('hidden');
+        }
+    }
 }
 
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.add('hidden');
-        tab.classList.remove('fade-in-up'); // Buang animasi lama
+        tab.classList.remove('fade-in-up'); 
     });
     
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -258,7 +285,6 @@ window.switchTab = function(tabId) {
     const activeContent = document.getElementById(tabId);
     activeContent.classList.remove('hidden');
     
-    // Trigger Reflow untuk pastikan animasi Fade-In jalan setiap kali tab ditekan
     void activeContent.offsetWidth; 
     activeContent.classList.add('fade-in-up');
     
@@ -337,7 +363,6 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
-// --- UX KETICK OS: EMPTY STATE SVG KEPADA SEMUA MODUL KOSONG ---
 const lockMsg = (modul) => `<div class="opacity-50 text-xs text-center py-10 text-gray-400">🔒 Pakej ${currentPlanConfig.planName} tidak menyokong ${modul}.<br><br>Sila hubungi pembekal untuk naik taraf.</div>`;
 
 const emptyStateSVG = (text) => `
@@ -586,7 +611,6 @@ window.processTransaction = async function(type, printMethod = 'PDF') {
     refreshAllUI();
     SyncModule.uploadData();
     
-    // UI Feedback: Transaction Success
     AudioEngine.playSuccess();
     KetickModal.toast("Transaksi Berjaya & Direkodkan!");
 };
@@ -754,6 +778,6 @@ function setupEventListeners() {
     }
 }
 
-function setupDevTrigger() {} // Dibuang sepenuhnya untuk Production
+function setupDevTrigger() {} 
 
 window.onload = initApp;
