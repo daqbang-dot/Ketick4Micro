@@ -1,58 +1,55 @@
 export const InventoryModule = {
-    getProducts: () => JSON.parse(localStorage.getItem('ketick_inventory')) || [],
-    saveProducts: (products) => localStorage.setItem('ketick_inventory', JSON.stringify(products)),
-
-    addProduct: (productData, planConfig, onSuccess) => {
-        const products = InventoryModule.getProducts();
+    getProducts: function() {
+        return JSON.parse(localStorage.getItem('ketick_products')) || [];
+    },
+    saveProducts: function(products) {
+        localStorage.setItem('ketick_products', JSON.stringify(products));
+    },
+    addProduct: function(product, planConfig, callback) {
+        let products = this.getProducts();
         
-        if (!planConfig.canAddUnlimitedProducts && products.length >= planConfig.maxProducts) {
-            alert(`Pakej ${planConfig.planName} hanya membenarkan maksimum ${planConfig.maxProducts} produk. Sila naik taraf pakej.`);
+        // Pengehadan Pakej (Gatekeeper)
+        if (planConfig && planConfig.maxProducts !== Infinity && products.length >= planConfig.maxProducts) {
+            window.KetickModal.alert(`Pakej terhad kepada ${planConfig.maxProducts} produk sahaja. Sila naik taraf pakej.`);
             return;
         }
-
-        const newProduct = {
-            id: Date.now(),
-            name: productData.name,
-            desc: productData.desc || '', // Tambahan Description
-            price: parseFloat(productData.price),
-            qty: parseInt(productData.qty),
-            img: productData.img || 'https://via.placeholder.com/150'
-        };
-
-        products.push(newProduct);
-        InventoryModule.saveProducts(products);
-        onSuccess();
+        
+        product.id = Date.now();
+        products.push(product);
+        this.saveProducts(products);
+        if (callback) callback();
     },
-
-    deleteProduct: (id) => {
-        let products = InventoryModule.getProducts();
-        products = products.filter(p => p.id !== id);
-        InventoryModule.saveProducts(products);
-    },
-
-    renderList: (containerId) => {
+    renderList: function(containerId) {
         const container = document.getElementById(containerId);
-        if (!container) return;
+        if(!container) return;
+        const products = this.getProducts();
 
-        const products = InventoryModule.getProducts();
+        // UX: Empty State SVG (Sama macam modul LHDN)
         if (products.length === 0) {
-            container.innerHTML = `<div class="text-center py-10 opacity-30 text-xs italic">Tiada produk. Sila tambah stok.</div>`;
+            container.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 opacity-30">
+                    <svg class="w-14 h-14 text-indigo mb-3 drop-shadow-[0_0_10px_rgba(79,70,229,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                    </svg>
+                    <p class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Tiada Rekod Inventori</p>
+                </div>`;
             return;
         }
 
+        // Render senarai stok dengan butang Edit & Padam
         container.innerHTML = products.map(p => `
-            <div class="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-2xl flex gap-4 items-center mb-3 shadow-sm dark:shadow-none transition-all">
-                <img src="${p.img}" class="w-14 h-14 object-cover rounded-xl border border-slate-200 dark:border-white/10">
+            <div class="bg-darkCard p-3 rounded-xl border border-darkBorder mb-2 flex gap-3 shadow-sm items-center">
+                <img src="${p.img}" class="w-12 h-12 rounded-lg object-cover border border-darkBorder">
                 <div class="flex-1">
-                    <h3 class="font-bold text-sm text-slate-800 dark:text-white">${p.name}</h3>
-                    ${p.desc ? `<p class="text-[9px] text-slate-500 dark:text-gray-400 mt-0.5 line-clamp-1">${p.desc}</p>` : ''}
-                    <div class="text-xs text-blue-600 dark:text-purple-400 font-bold mt-1">RM ${p.price.toFixed(2)}</div>
+                    <div class="font-bold text-xs text-white">${p.name}</div>
+                    <div class="text-[10px] text-lime font-mono mt-1">RM ${parseFloat(p.price).toFixed(2)}</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-3 py-1 rounded-lg ${p.qty <= 5 ? 'text-red-500' : 'text-slate-700 dark:text-white'}">
-                        ${p.qty} unit
+                <div class="text-right flex flex-col items-end gap-2">
+                    <div class="text-[10px] font-bold font-mono ${p.qty > 5 ? 'text-gray-400' : 'text-orange bg-orange/10 px-2 py-0.5 rounded'}">${p.qty} unit</div>
+                    <div class="flex gap-2">
+                        <button onclick="window.editInventory(${p.id})" class="text-[8px] bg-[#2A2A2A] text-white px-3 py-1 rounded hover:bg-[#333] transition uppercase tracking-widest shadow-sm">Edit</button>
+                        <button onclick="window.deleteInventoryProduct(${p.id})" class="text-[8px] text-orange hover:text-red-500 transition uppercase tracking-widest px-2 py-1">Padam</button>
                     </div>
-                    <button onclick="if(confirm('Padam produk ini?')){ InventoryModule.deleteProduct(${p.id}); refreshAllUI(); }" class="text-[10px] text-red-500 mt-2 opacity-70 hover:opacity-100">Padam</button>
                 </div>
             </div>
         `).join('');
