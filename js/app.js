@@ -22,6 +22,50 @@ import { LicenseModule } from '../modules/license.js';
 let currentPlanConfig = BasicPlan; 
 let isDevMode = false; 
 
+// --- UX KETICK OS: AUDIO ENGINE (Beep & Cha-ching) ---
+const AudioEngine = {
+    ctx: null,
+    init: function() {
+        if(!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if(AudioContext) this.ctx = new AudioContext();
+        }
+    },
+    playBeep: function() {
+        try {
+            this.init();
+            if(!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.05, this.ctx.currentTime); // Sangat perlahan & tak bingit
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.1);
+        } catch(e){}
+    },
+    playSuccess: function() {
+        try {
+            this.init();
+            if(!this.ctx) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+            osc.frequency.setValueAtTime(900, this.ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.3);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.3);
+        } catch(e){}
+    }
+};
+
 window.KetickModal = {
     show: function(type, message, defaultValue = '') {
         return new Promise((resolve) => {
@@ -47,7 +91,7 @@ window.KetickModal = {
 
             if (type === 'alert') {
                 btnCancel.classList.add('hidden');
-                titleEl.innerText = "Makluman";
+                titleEl.innerText = "System Alert";
             } else if (type === 'confirm') {
                 btnCancel.classList.remove('hidden');
                 titleEl.innerText = "Pengesahan";
@@ -68,7 +112,29 @@ window.KetickModal = {
     },
     alert: (msg) => window.KetickModal.show('alert', msg),
     confirm: (msg) => window.KetickModal.show('confirm', msg),
-    prompt: (msg, def) => window.KetickModal.show('prompt', msg, def)
+    prompt: (msg, def) => window.KetickModal.show('prompt', msg, def),
+    
+    // --- UX KETICK OS: TOAST NOTIFICATION ---
+    toast: function(msg, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if(!container) return;
+        
+        const el = document.createElement('div');
+        const bgClass = type === 'success' ? 'bg-lime text-black border-lime' : 'bg-orange text-white border-orange';
+        
+        el.className = `${bgClass} border border-opacity-50 px-4 py-3 rounded-xl text-[10px] font-bold font-mono shadow-2xl transition-all duration-300 transform translate-y-10 opacity-0 flex items-center justify-center text-center uppercase tracking-widest`;
+        el.innerText = msg;
+        
+        container.appendChild(el);
+        
+        // Animate In
+        setTimeout(() => { el.classList.remove('translate-y-10', 'opacity-0'); }, 10);
+        // Animate Out
+        setTimeout(() => {
+            el.classList.add('translate-y-10', 'opacity-0');
+            setTimeout(() => el.remove(), 300);
+        }, 2000);
+    }
 };
 
 window.alert = function(message) {
@@ -103,6 +169,17 @@ function initApp() {
     refreshAllUI();
     setupEventListeners();
     setupDevTrigger();
+    
+    // --- UX KETICK OS: GLOBAL HAPTIC PADA SEMUA BUTANG ---
+    document.body.addEventListener('click', (e) => {
+        // Kesan klik pada mana-mana butang atau elemen tab/produk
+        if(e.target.closest('button') || e.target.closest('.pos-item-btn') || e.target.closest('.tab-btn')) {
+            // Getaran Halus (Haptic)
+            if(navigator.vibrate) navigator.vibrate(15);
+            // Bunyi Beep (Init Audio)
+            AudioEngine.playBeep();
+        }
+    });
 }
 
 function checkLicenseSystem() {
@@ -168,16 +245,27 @@ function setPlan(planName) {
 }
 
 window.switchTab = function(tabId) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+        tab.classList.remove('fade-in-up'); // Buang animasi lama
+    });
+    
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active-tab', 'text-white', 'text-slate-800');
-        btn.classList.add('opacity-50', 'text-slate-500');
+        btn.classList.add('opacity-50', 'text-gray-300');
     });
-    document.getElementById(tabId).classList.remove('hidden');
+    
+    const activeContent = document.getElementById(tabId);
+    activeContent.classList.remove('hidden');
+    
+    // Trigger Reflow untuk pastikan animasi Fade-In jalan setiap kali tab ditekan
+    void activeContent.offsetWidth; 
+    activeContent.classList.add('fade-in-up');
+    
     const btnId = tabId.replace('tab-', 'btn-');
     if(document.getElementById(btnId)) {
         document.getElementById(btnId).classList.add('active-tab', 'text-white');
-        document.getElementById(btnId).classList.remove('opacity-50', 'text-slate-500');
+        document.getElementById(btnId).classList.remove('opacity-50', 'text-gray-300');
     }
     refreshAllUI();
 };
@@ -223,7 +311,7 @@ window.saveSettings = async function() {
         accName: document.getElementById('biz-acc-name').value,
         logo: document.getElementById('logo-preview').src 
     });
-    await KetickModal.alert("Tetapan berjaya disimpan!");
+    KetickModal.toast("Tetapan berjaya disimpan!");
     window.closeSettings();
     SyncModule.uploadData(); 
 };
@@ -249,7 +337,17 @@ function refreshAllUI() {
     renderLHDNExpenses();
 }
 
-const lockMsg = (modul) => `<div class="opacity-50 text-xs text-center py-10 text-slate-500 dark:text-white">🔒 Pakej ${currentPlanConfig.planName} tidak menyokong ${modul}.<br><br>Sila hubungi pembekal untuk naik taraf.</div>`;
+// --- UX KETICK OS: EMPTY STATE SVG KEPADA SEMUA MODUL KOSONG ---
+const lockMsg = (modul) => `<div class="opacity-50 text-xs text-center py-10 text-gray-400">🔒 Pakej ${currentPlanConfig.planName} tidak menyokong ${modul}.<br><br>Sila hubungi pembekal untuk naik taraf.</div>`;
+
+const emptyStateSVG = (text) => `
+    <div class="flex flex-col items-center justify-center py-10 opacity-30">
+        <svg class="w-14 h-14 text-indigo mb-3 drop-shadow-[0_0_10px_rgba(79,70,229,0.8)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+        </svg>
+        <p class="text-[10px] font-mono text-gray-400 uppercase tracking-widest">${text}</p>
+    </div>
+`;
 
 function renderLHDNExpenses() {
     const container = document.getElementById('lhdn-expenses-list');
@@ -257,16 +355,17 @@ function renderLHDNExpenses() {
     if(!currentPlanConfig.enableLHDN) return container.innerHTML = lockMsg("Modul LHDN / Cukai");
     
     const expenses = LHDNModule.getExpenses();
-    if(expenses.length === 0) return container.innerHTML = `<div class="text-xs text-center opacity-50 py-4">Tiada rekod perbelanjaan.</div>`;
+    if(expenses.length === 0) return container.innerHTML = emptyStateSVG("Tiada Rekod Perbelanjaan");
+    
     container.innerHTML = expenses.map(e => `
-        <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-200 dark:border-white/10 mb-2 shadow-sm flex justify-between items-center">
+        <div class="bg-darkCard p-3 rounded-xl border border-darkBorder mb-2 shadow-sm flex justify-between items-center">
             <div class="flex gap-3 items-center">
-                ${e.img ? `<img src="${e.img}" class="w-10 h-10 rounded-lg object-cover">` : `<div class="w-10 h-10 bg-slate-100 dark:bg-black/50 flex items-center justify-center text-[8px] opacity-50">Tiada</div>`}
-                <div><div class="font-bold text-xs">${e.desc}</div><div class="text-[9px] opacity-60">${e.category}</div></div>
+                ${e.img ? `<img src="${e.img}" class="w-10 h-10 rounded-lg object-cover border border-darkBorder">` : `<div class="w-10 h-10 bg-[#2A2A2A] flex items-center justify-center text-[8px] opacity-50 rounded-lg">Tiada</div>`}
+                <div><div class="font-bold text-xs text-white">${e.desc}</div><div class="text-[9px] opacity-60 text-gray-400 font-mono">${e.category}</div></div>
             </div>
             <div class="text-right">
-                <div class="font-bold text-sm text-red-500">-RM${e.amount.toFixed(2)}</div>
-                <button onclick="deleteExpense(${e.id})" class="text-[8px] text-slate-400 hover:text-red-500">Padam</button>
+                <div class="font-bold text-sm text-orange font-mono">-RM${e.amount.toFixed(2)}</div>
+                <button onclick="deleteExpense(${e.id})" class="text-[8px] text-gray-500 hover:text-orange uppercase tracking-widest">Padam</button>
             </div>
         </div>
     `).join('');
@@ -278,12 +377,14 @@ function renderCRM() {
     if(!currentPlanConfig.enableCRM) return container.innerHTML = lockMsg("Modul CRM");
 
     const customers = CRMModule.getCustomers();
+    if(customers.length === 0) return container.innerHTML = emptyStateSVG("Tiada Rekod Pelanggan");
+
     container.innerHTML = customers.map(c => `
-        <div class="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-2xl flex justify-between items-center mb-2">
-            <div><div class="font-bold text-xs">${c.name}</div><div class="text-[10px] text-blue-600 dark:text-purple-400 font-mono">${c.phone}</div></div>
+        <div class="bg-darkCard border border-darkBorder p-3 rounded-xl flex justify-between items-center mb-2">
+            <div><div class="font-bold text-xs text-white">${c.name}</div><div class="text-[10px] text-primary font-mono">${c.phone}</div></div>
             <div class="text-right flex items-center gap-2">
-                <button onclick="editCustomer(${c.id}, '${c.name}', '${c.phone}')" class="text-[10px] bg-slate-100 dark:bg-white/10 px-2 py-1 rounded">Edit</button>
-                <button onclick="toggleJail('${c.phone}')" class="text-[8px] text-red-500">STOP</button>
+                <button onclick="editCustomer(${c.id}, '${c.name}', '${c.phone}')" class="text-[10px] bg-[#2A2A2A] text-white px-2 py-1 rounded">Edit</button>
+                <button onclick="toggleJail('${c.phone}')" class="text-[8px] text-orange uppercase tracking-widest font-bold">Stop</button>
             </div>
         </div>
     `).join('');
@@ -295,12 +396,14 @@ function renderBuku555() {
     if(!currentPlanConfig.enableBuku555) return container.innerHTML = lockMsg("Buku 555 (Hutang)");
 
     const debts = Buku555Module.getDebts();
+    if(debts.length === 0) return container.innerHTML = emptyStateSVG("Tiada Rekod Pemiutang");
+
     container.innerHTML = debts.map(d => `
-        <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-2xl border border-red-100 dark:border-red-500/20 flex justify-between items-center mb-2">
-            <div><div class="font-bold text-xs text-red-600">${d.name}</div><div class="text-[9px] opacity-70">Bil #${d.billNo} | ${d.date}</div></div>
+        <div class="bg-orange/5 p-3 rounded-xl border border-orange/20 flex justify-between items-center mb-2">
+            <div><div class="font-bold text-xs text-orange">${d.name}</div><div class="text-[9px] opacity-70 text-gray-300 font-mono">Bil #${d.billNo} | ${d.date}</div></div>
             <div class="text-right">
-                <div class="font-bold text-sm text-red-700 dark:text-white mb-1">RM ${d.amount.toFixed(2)}</div>
-                <button onclick="payBuku555(${d.id}, ${d.amount})" class="text-[8px] bg-green-500 text-white px-2 py-1 rounded font-bold uppercase">Bayar</button>
+                <div class="font-bold text-sm text-white mb-1 font-mono">RM ${d.amount.toFixed(2)}</div>
+                <button onclick="payBuku555(${d.id}, ${d.amount})" class="text-[8px] bg-orange text-white px-2 py-1 rounded font-bold uppercase tracking-widest">Bayar</button>
             </div>
         </div>
     `).join('');
@@ -312,14 +415,16 @@ function renderKuponManager() {
     if(!currentPlanConfig.enableKupon) return container.innerHTML = lockMsg("Pengurusan Kupon");
 
     const kupons = KuponModule.getKupons();
+    if(kupons.length === 0) return container.innerHTML = emptyStateSVG("Tiada Kupon Aktif");
+
     container.innerHTML = kupons.map(k => `
-        <div class="bg-white dark:bg-white/5 p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center mb-2 shadow-sm">
-            <div><div class="font-bold text-xs text-blue-600">${k.code}</div><div class="text-[9px] opacity-60">RM/Pct: ${k.value} | Min: RM${k.minSpend}</div></div>
+        <div class="bg-darkCard p-3 rounded-xl border border-darkBorder flex justify-between items-center mb-2 shadow-sm">
+            <div><div class="font-bold text-xs text-lime uppercase">${k.code}</div><div class="text-[9px] opacity-60 text-white font-mono">RM/Pct: ${k.value} | Min: RM${k.minSpend}</div></div>
             <div class="text-right flex flex-col items-end gap-1">
-                <div class="text-[10px] font-bold text-green-600">${k.qty} baki</div>
+                <div class="text-[10px] font-bold text-gray-400 font-mono">${k.qty} baki</div>
                 <div class="flex gap-2">
-                    <button onclick="editKupon(${k.id})" class="text-[8px] bg-slate-200 dark:bg-white/10 px-2 rounded">Edit</button>
-                    <button onclick="KuponModule.deleteKupon(${k.id}); refreshAllUI();" class="text-[8px] text-red-500">Padam</button>
+                    <button onclick="editKupon(${k.id})" class="text-[8px] bg-[#2A2A2A] text-white px-2 rounded">Edit</button>
+                    <button onclick="KuponModule.deleteKupon(${k.id}); refreshAllUI(); KetickModal.toast('Kupon Dibuang', 'error');" class="text-[8px] text-orange uppercase tracking-widest">Padam</button>
                 </div>
             </div>
         </div>
@@ -364,6 +469,7 @@ window.editCustomer = async function(id, oldName, oldPhone) {
     
     if(newName && newPhone) { 
         CRMModule.updateCustomerDetails(id, newName, newPhone); 
+        KetickModal.toast("Data pelanggan dikemaskini.");
         refreshAllUI(); 
     }
 };
@@ -373,7 +479,8 @@ window.payBuku555 = async function(id, currentAmount) {
     const amt = await KetickModal.prompt(`Baki hutang: RM${currentAmount.toFixed(2)}\nMasukkan jumlah bayaran:`, "");
     if(amt !== null && amt !== "" && !isNaN(amt)) {
         Buku555Module.payDebt(id, amt);
-        await KetickModal.alert("Bayaran direkodkan!");
+        AudioEngine.playSuccess();
+        KetickModal.toast("Bayaran hutang direkodkan!");
         refreshAllUI();
     }
 };
@@ -391,13 +498,14 @@ window.applyKupon = async () => {
         POSModule.appliedKupon = null; 
         POSModule.currentDiscount = 0; 
         refreshAllUI();
-        return await KetickModal.alert(`Gagal: ${check.msg}`); 
+        return KetickModal.toast(`Gagal: ${check.msg}`, 'error'); 
     }
     
     POSModule.appliedKupon = code;
     POSModule.currentDiscount = check.discount;
     refreshAllUI();
-    await KetickModal.alert(`Berjaya! Kupon sah. Diskaun RM${check.discount.toFixed(2)} diberikan.`);
+    AudioEngine.playSuccess();
+    KetickModal.toast(`Kupon Sah! Diskaun RM${check.discount.toFixed(2)} ditolak.`);
 };
 
 window.searchCustomer = async function() {
@@ -409,10 +517,10 @@ window.searchCustomer = async function() {
     
     if(found) {
         document.getElementById('pos-name').value = found.name;
-        await KetickModal.alert(`Ditemui: ${found.name}`);
+        KetickModal.toast(`Pelanggan Ditemui: ${found.name}`);
     } else {
         document.getElementById('pos-name').value = '';
-        await KetickModal.alert("Pelanggan tiada rekod. Sila taip nama untuk daftar baru automatik.");
+        KetickModal.toast("Pelanggan baru. Sila taip nama.", "error");
     }
 };
 
@@ -477,19 +585,26 @@ window.processTransaction = async function(type, printMethod = 'PDF') {
     POSModule.currentDiscount = 0;
     refreshAllUI();
     SyncModule.uploadData();
+    
+    // UI Feedback: Transaction Success
+    AudioEngine.playSuccess();
+    KetickModal.toast("Transaksi Berjaya & Direkodkan!");
 };
 
 window.cancelBill = async () => { 
     if(await KetickModal.confirm("Batalkan transaksi ini?")) { 
         POSModule.clearCart(); 
         refreshAllUI(); 
+        KetickModal.toast("Troli dibersihkan.", "error");
     } 
 };
 
 window.filterHistory = () => HistoryModule.render('history-list', currentPlanConfig, document.getElementById('history-search')?.value);
 window.toggleJail = async (p) => { 
     if(!currentPlanConfig.enableWABlast) return await KetickModal.alert("Pakej tidak menyokong fungsi Jail.");
-    WABlastModule.addToJail(p); refreshAllUI(); 
+    WABlastModule.addToJail(p); 
+    KetickModal.toast("Status pelanggan dikemaskini.");
+    refreshAllUI(); 
 };
 
 window.addManualCustomer = async () => { 
@@ -498,6 +613,7 @@ window.addManualCustomer = async () => {
     const p = document.getElementById('crm-manual-phone').value;
     if(!n || !p) return await KetickModal.alert("Sila isi Nama & No Telefon.");
     CRMModule.saveCustomer(n, p); 
+    KetickModal.toast("Pelanggan ditambah ke sistem.");
     refreshAllUI(); 
 };
 
@@ -506,7 +622,8 @@ window.importPhoneContacts = async () => {
     await KetickModal.alert("Menyemak buku telefon... Sila benarkan akses jika diminta.");
     const result = await CRMModule.importFromContacts();
     if(result.success) {
-        await KetickModal.alert(`Berjaya import ${result.count} pelanggan!`);
+        AudioEngine.playSuccess();
+        KetickModal.toast(`Berjaya import ${result.count} pelanggan!`);
         refreshAllUI();
     } else {
         await KetickModal.alert(result.msg);
@@ -519,9 +636,11 @@ window.createNewKupon = async () => {
     if(window.editingKuponId) {
         KuponModule.updateKupon(window.editingKuponId, data);
         window.editingKuponId = null;
-        document.getElementById('btn-save-kupon').innerText = "SIMPAN KUPON";
+        document.getElementById('btn-save-kupon').innerText = "EXECUTE PROCESS";
+        KetickModal.toast("Kupon Dikemaskini");
     } else {
         KuponModule.addKupon(data);
+        KetickModal.toast("Kupon Baru Dicipta");
     }
     document.getElementById('kupon-form').reset();
     refreshAllUI();
@@ -530,6 +649,7 @@ window.createNewKupon = async () => {
 window.deleteExpense = async (id) => { 
     if(await KetickModal.confirm("Padam perbelanjaan ini?")) { 
         LHDNModule.deleteExpense(id); 
+        KetickModal.toast("Rekod dipadam", "error");
         refreshAllUI(); 
     } 
 };
@@ -544,7 +664,8 @@ window.saveNewExpense = async function() {
 
     const processSave = async (imgData = null) => {
         LHDNModule.saveExpense(desc, amount, cat, imgData);
-        await KetickModal.alert("Perbelanjaan direkodkan!");
+        AudioEngine.playSuccess();
+        KetickModal.toast("Perbelanjaan direkodkan!");
         document.getElementById('lhdn-expense-form').reset();
         refreshAllUI();
     };
@@ -556,7 +677,10 @@ window.saveNewExpense = async function() {
 window.generateTaxReport = async (type) => {
     if(!currentPlanConfig.enableLHDN) return await KetickModal.alert("Fungsi Export LHDN dikunci.");
     const val = (type === 'MONTH') ? await KetickModal.prompt("Bulan (MM-YYYY):", "04-2026") : await KetickModal.prompt("Tahun (YYYY):", "2026");
-    if(val !== null && val !== "") LHDNModule.downloadTaxReport(type, val);
+    if(val !== null && val !== "") {
+        LHDNModule.downloadTaxReport(type, val);
+        KetickModal.toast("Laporan Excel sedang dimuat turun.");
+    }
 };
 window.generateEInvoiceJSON = async (billNo) => {
     if(!currentPlanConfig.enableLHDN) return await KetickModal.alert("E-Invoice dikunci.");
@@ -568,7 +692,8 @@ window.startWABlast = async function() {
     const msg = document.getElementById('blast-msg').value;
     if(!msg) return await KetickModal.alert("Isi mesej terlebih dahulu.");
     const queue = WABlastModule.generateBlastLinks(msg);
-    document.getElementById('blast-status-display').innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-green-600 p-2 rounded-xl text-[10px] mt-1 text-white text-center">HANTAR ${i+1}: ${q.name}</a>`).join('');
+    document.getElementById('blast-status-display').innerHTML = queue.map((q, i) => `<a href="${q.link}" target="_blank" class="block bg-indigo p-2 rounded-lg text-[10px] mt-1 text-white text-center shadow-md">HANTAR ${i+1}: ${q.name}</a>`).join('');
+    KetickModal.toast("Senarai Blast Dijana!");
 };
 
 window.startTurboBlast = async function() {
@@ -581,7 +706,7 @@ window.startTurboBlast = async function() {
             window.open(queue[i].link, '_blank'); 
             await new Promise(r => setTimeout(r, delay * 1000)); 
         }
-        await KetickModal.alert("Semua mesej dihantar!");
+        KetickModal.toast("Semua mesej dihantar!");
     }
 };
 
@@ -606,11 +731,11 @@ function setupEventListeners() {
                     let idx = prods.findIndex(x => x.id === window.editingProductId);
                     if(idx > -1) { prods[idx] = {...prods[idx], ...formData}; InventoryModule.saveProducts(prods); }
                     window.editingProductId = null;
-                    document.getElementById('btn-save-inv').innerText = "SIMPAN DATA";
-                    await KetickModal.alert("Produk dikemaskini!");
+                    document.getElementById('btn-save-inv').innerText = "EXECUTE PROCESS";
+                    KetickModal.toast("Produk dikemaskini!");
                 } else {
                     InventoryModule.addProduct(formData, currentPlanConfig, () => {});
-                    await KetickModal.alert("Produk Ditambah!");
+                    KetickModal.toast("Stok baru ditambah!");
                 }
                 form.reset(); refreshAllUI();
             };
@@ -629,37 +754,6 @@ function setupEventListeners() {
     }
 }
 
-function setupDevTrigger() {
-    let devTapCount = 0;
-    let devTapTimer;
-    
-    const devTrigger = document.getElementById('auth-status');
-    
-    if(devTrigger) {
-        devTrigger.style.cursor = "pointer"; 
-        devTrigger.addEventListener('click', () => {
-            devTapCount++;
-            clearTimeout(devTapTimer);
-            
-            devTapTimer = setTimeout(() => { devTapCount = 0; }, 3000);
-
-            if(devTapCount >= 10) { 
-                devTapCount = 0;
-                if(!isDevMode) {
-                    isDevMode = true;
-                    import('./dev-tools.js').then(module => {
-                        module.initDevTools(currentPlanConfig);
-                        KetickModal.alert("System Override: Developer Mode Activated.");
-                    });
-                }
-            }
-        });
-    }
-}
-
-window.AdminGenerateKey = async function(planName, days) {
-    const newKey = LicenseModule.generateKey(planName, days);
-    prompt(`Key:`, newKey);
-};
+function setupDevTrigger() {} // Dibuang sepenuhnya untuk Production
 
 window.onload = initApp;
