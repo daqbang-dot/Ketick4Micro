@@ -96,9 +96,6 @@ function compressImage(file, callback) {
 
 function initApp() {
     console.log(`[KETICK4MICRO] Sistem bermula.`);
-    const savedTheme = localStorage.getItem('ketick_theme');
-    if (savedTheme === 'light') { document.documentElement.classList.remove('dark'); } 
-    else { document.documentElement.classList.add('dark'); }
     
     checkLicenseSystem();
     
@@ -160,11 +157,6 @@ window.unlockPaywall = async function() {
     } else {
         alert(result.msg);
     }
-};
-
-window.toggleTheme = function() {
-    document.documentElement.classList.toggle('dark');
-    localStorage.setItem('ketick_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
 };
 
 function setPlan(planName) {
@@ -657,7 +649,7 @@ function setupDevTrigger() {
                     isDevMode = true;
                     import('./dev-tools.js').then(module => {
                         module.initDevTools(currentPlanConfig);
-                        KetickModal.alert("DEV_PANEL: ACTIVATED 🛠️");
+                        KetickModal.alert("System Override: Developer Mode Activated.");
                     });
                 }
             }
