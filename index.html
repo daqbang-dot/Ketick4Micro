@@ -48,11 +48,11 @@
             color: #f3f4f6; 
             
             /* --- KOD NATIVE APP FEEL (HALANG HIGHLIGHT) --- */
-            -webkit-touch-callout: none; /* Halang popup menu bila tekan lama di mobile */
-            -webkit-user-select: none;   /* Safari / iOS */
-            -moz-user-select: none;      /* Firefox */
-            -ms-user-select: none;       /* Edge / IE */
-            user-select: none;           /* Standard */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;   
+            -moz-user-select: none;      
+            -ms-user-select: none;       
+            user-select: none;           
         }
 
         /* Pengecualian: Benarkan highlight hanya pada ruangan menaip */
@@ -81,6 +81,13 @@
 <body class="p-4 mx-auto max-w-lg min-h-screen relative">
     
     <div id="toast-container" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[99999] flex flex-col gap-2 pointer-events-none w-full max-w-xs px-4"></div>
+
+    <button id="pwa-install-btn" onclick="installApp()" class="hidden fixed bottom-24 right-4 z-[9999] bg-lime text-black px-4 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(57,255,20,0.4)] flex items-center gap-2 hover:scale-105 transition-transform">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+        </svg>
+        Install App
+    </button>
 
     <header class="flex justify-between items-center mb-2 pt-2">
         <h1 id="secret-trigger" class="text-2xl font-bold tracking-tight text-white lowercase">
