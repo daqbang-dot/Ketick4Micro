@@ -41,7 +41,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; overflow-x: hidden; background-color: #121212; color: #f3f4f6; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden; 
+            background-color: #121212; 
+            color: #f3f4f6; 
+            
+            /* --- KOD NATIVE APP FEEL (HALANG HIGHLIGHT) --- */
+            -webkit-touch-callout: none; /* Halang popup menu bila tekan lama di mobile */
+            -webkit-user-select: none;   /* Safari / iOS */
+            -moz-user-select: none;      /* Firefox */
+            -ms-user-select: none;       /* Edge / IE */
+            user-select: none;           /* Standard */
+        }
+
+        /* Pengecualian: Benarkan highlight hanya pada ruangan menaip */
+        input, textarea {
+            -webkit-user-select: auto !important;
+            -moz-user-select: auto !important;
+            -ms-user-select: auto !important;
+            user-select: auto !important;
+        }
+
         .active-tab { background: linear-gradient(135deg, #4F46E5 0%, #007BFF 100%); box-shadow: 0 4px 15px rgba(0,0,0,0.5); color: white !important; border: 1px solid #4F46E5; }
         .hidden { display: none !important; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
