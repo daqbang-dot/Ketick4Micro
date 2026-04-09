@@ -307,7 +307,7 @@ window.closePricingPage = function() {
 window.buyPlan = function(planName) {
     let paymentLink = "";
     if (planName === "PRO") {
-        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO-Montly";
+        paymentLink = "https://toyyibpay.com/Ketick4MicroPRO-monthly";
     } else if (planName === "PREMIUM") {
         paymentLink = "https://toyyibpay.com/Ketick4MicroPREMIUM-monthly";
     } else if (planName === "LEGEND") {
