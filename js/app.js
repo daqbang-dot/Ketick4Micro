@@ -509,6 +509,17 @@ window.editInventory = function(id) {
     }
 };
 
+window.deleteInventoryProduct = async function(id) {
+    if(await KetickModal.confirm("Padam produk ini dari pangkalan data secara kekal?")) {
+        let prods = InventoryModule.getProducts();
+        prods = prods.filter(x => x.id !== id);
+        InventoryModule.saveProducts(prods);
+        
+        KetickModal.toast("Stok produk dipadam!", "error");
+        refreshAllUI(); 
+    }
+};
+
 window.editingKuponId = null;
 window.editKupon = async function(id) {
     if(!currentPlanConfig.enableKupon) return await KetickModal.alert("Pakej anda tidak menyokong Kupon.");
