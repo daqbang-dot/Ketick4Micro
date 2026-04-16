@@ -784,6 +784,40 @@ window.startTurboBlast = async function() {
     }
 };
 
+// --- FUNGSI TAMBAH / BUANG TROLI JUALAN ---
+window.addToCart = function(productId) {
+    const products = InventoryModule.getProducts();
+    const p = products.find(x => x.id === productId);
+    
+    if(!p) return;
+    if(p.qty <= 0) {
+        AudioEngine.playBeep(); // Bunyi error
+        return KetickModal.toast("Stok Habis!", "error");
+    }
+    
+    // Masukkan ke dalam troli
+    POSModule.cart.push({...p}); 
+    
+    // Mainkan efek bunyi
+    AudioEngine.playBeep();
+    KetickModal.toast(`${p.name} masuk troli`);
+    refreshAllUI();
+};
+
+window.removeFromCart = function(index) {
+    POSModule.cart.splice(index, 1);
+    
+    // Kalau troli dah dikosongkan, batalkan kupon diskaun
+    if (POSModule.cart.length === 0) {
+        POSModule.appliedKupon = null;
+        POSModule.currentDiscount = 0;
+        document.getElementById('pos-kupon').value = '';
+    }
+    
+    KetickModal.toast("Item dikeluarkan", "error");
+    refreshAllUI();
+};
+
 function setupEventListeners() {
     const form = document.getElementById('add-product-form');
     if(form) {
