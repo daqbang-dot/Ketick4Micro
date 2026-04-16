@@ -336,13 +336,21 @@
                     </div>
 
                     <div class="space-y-2">
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="processTransaction('QUOTATION')" class="border border-darkBorder text-gray-300 py-3 rounded-lg text-[10px] font-bold hover:bg-[#252525] transition uppercase tracking-widest">Quotation</button>
-                            <button onclick="processTransaction('INVOICE')" class="border border-indigo text-indigo py-3 rounded-lg text-[10px] font-bold hover:bg-indigo/10 transition uppercase tracking-widest">Invoice</button>
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <button onclick="processTransaction('QUOTATION', 'PDF')" class="border border-[#2A2A2A] text-white text-[10px] py-3 rounded-lg font-bold hover:border-primary transition uppercase tracking-widest">
+                                Quotation
+                            </button>
+                            <button onclick="processTransaction('INVOICE', 'PDF')" class="border border-indigo text-indigo text-[10px] py-3 rounded-lg font-bold hover:bg-indigo/10 transition uppercase tracking-widest">
+                                Invoice
+                            </button>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mt-1">
-                            <button onclick="processTransaction('RECEIPT', 'PDF')" class="w-full bg-primary hover:bg-primaryHover text-white py-4 rounded-lg font-bold shadow-md text-[10px] transition uppercase tracking-widest">📄 Jana PDF</button>
-                            <button onclick="processTransaction('RECEIPT', 'BT')" class="w-full bg-indigo hover:bg-indigo/90 text-white py-4 rounded-lg font-bold shadow-md text-[10px] transition uppercase tracking-widest">🖨️ Print BT</button>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <button onclick="processTransaction('RECEIPT', 'PDF')" class="bg-primary hover:bg-blue-600 text-white text-[10px] py-3 rounded-lg font-bold transition uppercase tracking-widest flex items-center justify-center gap-2 shadow-md">
+                                📄 Jana PDF
+                            </button>
+                            <button onclick="processTransaction('RECEIPT', 'BT')" class="bg-indigo hover:bg-indigo-600 text-white text-[10px] py-3 rounded-lg font-bold transition uppercase tracking-widest flex items-center justify-center gap-2 shadow-md">
+                                🖨️ Print BT
+                            </button>
                         </div>
                         <button onclick="cancelBill()" class="w-full text-[10px] opacity-50 py-3 mt-1 hover:text-orange transition text-gray-400 uppercase tracking-widest font-bold">Batalkan Proses</button>
                     </div>
