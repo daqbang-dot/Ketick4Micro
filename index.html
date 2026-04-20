@@ -3,33 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KETICK4MICRO</title>
+    <title>KETICK OS - Flux Premium</title>
     
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#121212">
+    <meta name="theme-color" content="#050505">
     <link rel="apple-touch-icon" href="icon-001.png">
     
+    <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
                     colors: {
-                        primary: '#007BFF', 
-                        primaryHover: '#0056b3',
-                        indigo: '#4F46E5',  
+                        primary: '#00E5FF', /* Ditukar ke Flux Cyan untuk butang asal */
+                        primaryHover: '#00B8CC',
+                        indigo: '#B000FF',  /* Ditukar ke Flux Purple */
                         lime: '#39FF14',    
                         orange: '#FF5722',  
-                        darkBg: '#121212',  
-                        darkCard: '#1A1A1A',
-                        darkBorder: '#2A2A2A'
+                        fluxCyan: '#00E5FF',
+                        fluxPurple: '#B000FF',
+                        fluxNeon: '#39FF14',
+                        darkBg: '#050505',
+                        darkCard: 'rgba(20, 20, 25, 0.6)',
+                        darkBorder: 'rgba(255, 255, 255, 0.1)'
                     }
                 }
             }
@@ -39,288 +39,109 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            overflow-x: hidden; 
-            background-color: #121212; 
-            color: #f3f4f6; 
-            
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;   
-            -moz-user-select: none;      
-            -ms-user-select: none;       
-            user-select: none;           
-        }
-
-        input, textarea {
-            -webkit-user-select: auto !important;
-            -moz-user-select: auto !important;
-            -ms-user-select: auto !important;
-            user-select: auto !important;
-        }
-
-        .active-tab { background: linear-gradient(135deg, #4F46E5 0%, #007BFF 100%); box-shadow: 0 4px 15px rgba(0,0,0,0.5); color: white !important; border: 1px solid #4F46E5; }
-        .hidden { display: none !important; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 10px; }
-        
-        .fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </head>
-<body class="p-4 mx-auto max-w-lg min-h-screen relative">
+<body class="p-0 mx-auto max-w-lg min-h-screen relative text-gray-200">
     
     <div id="toast-container" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[99999] flex flex-col gap-2 pointer-events-none w-full max-w-xs px-4"></div>
 
-    <button id="pwa-install-btn" onclick="installApp()" class="hidden fixed bottom-24 right-4 z-[9999] bg-lime text-black px-4 py-3 rounded-full font-bold text-[10px] uppercase tracking-widest shadow-[0_0_15px_rgba(57,255,20,0.4)] flex items-center gap-2 hover:scale-105 transition-transform">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-        </svg>
-        Install App
-    </button>
+    <div class="flux-bg"></div>
 
-    <header class="flex justify-between items-center mb-2 pt-2">
-        <h1 id="secret-trigger" class="text-2xl font-bold tracking-tight text-white lowercase">
-            ketick<span class="text-lime text-3xl leading-none">.</span>
-        </h1>
-        <div class="flex items-center gap-2">
-            <button onclick="openPricingPage()" class="bg-indigo text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-md flex items-center gap-1 hover:bg-indigo/90 transition">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3 text-lime">
-                    <path fill-rule="evenodd" d="M14.615 1.595a.75.75 0 01.359.852L12.982 9.75h7.268a.75.75 0 01.548 1.262l-10.5 11.25a.75.75 0 01-1.272-.71l1.992-7.302H3.75a.75.75 0 01-.548-1.262l10.5-11.25a.75.75 0 01.913-.143z" clip-rule="evenodd" />
-                </svg>
-                Naik Taraf
-            </button>
+    <header class="glass-panel sticky top-0 z-50 px-4 py-3 border-b border-white/5 rounded-b-2xl mb-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+        <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center gap-2">
+                <div class="w-2 h-2 rounded-full bg-fluxNeon animate-pulse shadow-[0_0_8px_#39FF14]"></div>
+                <h1 id="secret-trigger" class="text-xl font-extrabold tracking-tighter text-white uppercase flex items-baseline gap-1">
+                    KETICK <span class="text-fluxCyan font-mono text-[10px] tracking-widest font-normal">CORE</span>
+                </h1>
+            </div>
             
-            <button onclick="openAccountPage()" class="bg-darkCard p-2 rounded-lg border border-darkBorder hover:bg-[#252525] transition text-gray-400 hover:text-white" title="Portal Akaun & Bantuan">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                </svg>
-            </button>
-
-            <button onclick="openSettings()" class="bg-darkCard p-2 rounded-lg border border-darkBorder hover:bg-[#252525] transition text-gray-400 hover:text-white" title="Tetapan Sistem">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0zM12 9v6m3-3H9" />
-                    <circle cx="12" cy="12" r="2.5" />
-                </svg>
-            </button>
-        </div>
-    </header>
-    
-    <div class="flex justify-between items-center mb-6 px-1">
-        <div id="auth-status" class="text-[8px] bg-primary/20 px-2 py-1 rounded border border-primary/50 text-primary font-mono tracking-widest uppercase">BASIC MODE</div>
-        <div id="sync-status" class="text-[8px] text-lime font-mono">System: Offline Ready</div>
-    </div>
-
-    <div id="account-page" class="fixed inset-0 bg-darkBg/95 backdrop-blur-xl z-[150] hidden overflow-y-auto p-6">
-        <div class="max-w-md mx-auto pb-10">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Portal Pengguna</h2>
-                <button onclick="closeAccountPage()" class="text-2xl opacity-50 hover:opacity-100 transition text-white">✕</button>
-            </div>
-
-            <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-lg mb-4 relative overflow-hidden">
-                <div class="absolute top-0 right-0 bg-primary/20 text-primary text-[8px] px-3 py-1 rounded-bl-lg font-bold uppercase tracking-widest">Status Lesen</div>
-                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pakej Semasa</h3>
-                <div id="acc-plan-name" class="text-2xl font-bold text-white mb-2 font-mono tracking-wider">BASIC MODE</div>
-                
-                <div class="bg-[#111] p-3 rounded-lg border border-[#2A2A2A] mb-4">
-                    <p class="text-[9px] text-gray-500 uppercase tracking-widest mb-1">Baki Hari Langganan</p>
-                    <p id="acc-days-left" class="text-lg font-bold text-lime font-mono">0 Hari</p>
-                </div>
-                
-                <button onclick="closeAccountPage(); openPricingPage();" class="w-full bg-indigo hover:bg-indigo/90 text-white py-3 rounded-lg font-bold text-[10px] transition shadow-md uppercase tracking-widest">Perbaharui / Naik Taraf</button>
-            </div>
-
-            <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-sm mb-4">
-                <h3 class="text-xs font-bold text-lime uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <span class="text-lg">📢</span> Pengumuman Rasmi
-                </h3>
-                <div class="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                    <div class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg">
-                        <p class="text-[9px] text-primary font-mono mb-1">Versi 2.0 (Terkini)</p>
-                        <p class="text-xs text-white font-bold mb-1">UI/UX Kayangan & PWA Native</p>
-                        <p class="text-[10px] text-gray-400 leading-relaxed">Sistem KETICK kini dikemaskini dengan antaramuka 'Dark Mode' moden, kesan bunyi, dan getaran butang. Sila 'Add to Home Screen' untuk pengalaman penuh.</p>
-                    </div>
-                    <div class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg">
-                        <p class="text-[9px] text-orange font-mono mb-1">Makluman Cukai LHDN</p>
-                        <p class="text-xs text-white font-bold mb-1">Format E-Invoice (JSON)</p>
-                        <p class="text-[10px] text-gray-400 leading-relaxed">Fail e-Invoice dijana dalam format .json untuk memenuhi piawaian LHDN bagi penghantaran data sistem-ke-sistem.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-darkCard border border-indigo/30 p-5 rounded-xl shadow-sm">
-                <h3 class="text-xs font-bold text-white uppercase tracking-widest mb-2">Perlukan Bantuan?</h3>
-                <p class="text-[10px] text-gray-400 mb-4">Hubungi pihak pentadbir untuk isu teknikal, tempahan lesen secara manual, atau pertanyaan sistem.</p>
-                <button onclick="contactSupport()" class="w-full bg-[#2A2A2A] hover:bg-[#333] border border-darkBorder text-white py-3 rounded-lg font-bold text-[10px] flex items-center justify-center gap-2 transition uppercase tracking-widest">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 text-lime">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-                    </svg>
-                    Live Chat Admin (WhatsApp)
+            <div class="flex gap-2">
+                <button onclick="openPricingPage()" class="glass-input px-3 py-1.5 rounded-lg hover:border-fluxCyan transition text-[9px] font-bold uppercase tracking-widest text-fluxCyan flex items-center gap-1">
+                    <span class="text-xs">⚡</span> Naik Taraf
+                </button>
+                <button onclick="openAccountPage()" class="glass-input p-2 rounded-lg hover:border-fluxCyan transition group">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 group-hover:text-fluxCyan"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                </button>
+                <button onclick="openSettings()" class="glass-input p-2 rounded-lg hover:border-fluxCyan transition group">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 group-hover:text-fluxCyan"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0015 0m-15 0a7.5 7.5 0 1115 0m-15 0H3m16.5 0H21m-1.5 0a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0zM12 9v6m3-3H9" /><circle cx="12" cy="12" r="2.5" /></svg>
                 </button>
             </div>
         </div>
-    </div>
-
-    <div id="pricing-page" class="fixed inset-0 bg-darkBg/95 backdrop-blur-xl z-[150] hidden overflow-y-auto p-6">
-        <div class="max-w-md mx-auto pb-10">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-white">Pilih Pakej Anda</h2>
-                <button onclick="closePricingPage()" class="text-2xl opacity-50 hover:opacity-100 transition text-white">✕</button>
-            </div>
-            <p class="text-xs text-gray-400 mb-6">Tingkatkan kapasiti jualan dan urus data secara profesional dengan sistem PKS terulung.</p>
-
-            <div class="space-y-4">
-                <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-sm">
-                    <h3 class="text-sm font-bold text-primary uppercase tracking-widest mb-1">Pakej PRO</h3>
-                    <div class="text-2xl font-bold text-white mb-3 font-mono">RM 15.90<span class="text-[10px] opacity-50 font-normal font-sans"> / bulan</span></div>
-                    <ul class="text-[10px] space-y-2 mb-4 text-gray-300">
-                        <li><span class="text-lime">✔</span> Jualan POS Tanpa Had</li>
-                        <li><span class="text-lime">✔</span> Pengurusan Inventori</li>
-                        <li><span class="text-lime">✔</span> Sistem Kupon Diskaun</li>
-                        <li><span class="text-lime">✔</span> Cetak Resit PDF & Bluetooth</li>
-                    </ul>
-                    <button onclick="buyPlan('PRO')" class="w-full bg-[#2A2A2A] text-white py-3 rounded-lg font-bold text-[10px] hover:bg-[#333] transition">LANGGAN PRO</button>
-                </div>
-
-                <div class="bg-darkCard border border-indigo p-5 rounded-xl shadow-lg relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-indigo text-white text-[8px] px-3 py-1 rounded-bl-lg font-bold uppercase">Paling Laris</div>
-                    <h3 class="text-sm font-bold text-indigo uppercase tracking-widest mb-1">Pakej PREMIUM</h3>
-                    <div class="text-2xl font-bold text-white mb-3 font-mono">RM 23.90<span class="text-[10px] opacity-50 font-normal font-sans"> / bulan</span></div>
-                    <ul class="text-[10px] space-y-2 mb-4 text-gray-200">
-                        <li>✨ <span class="font-bold">Semua Fungsi PRO</span></li>
-                        <li>✨ Pusat CRM Pelanggan</li>
-                        <li>✨ WA Blast (Pemasaran WhatsApp)</li>
-                        <li>✨ Buku 555 (Sistem Hutang Pintar)</li>
-                    </ul>
-                    <button onclick="buyPlan('PREMIUM')" class="w-full bg-indigo hover:bg-indigo/90 text-white py-3 rounded-lg font-bold text-[10px] transition shadow-[0_0_15px_rgba(79,70,229,0.4)]">LANGGAN PREMIUM</button>
-                </div>
-
-                <div class="bg-darkCard border border-orange p-5 rounded-xl shadow-lg relative">
-                    <h3 class="text-sm font-bold text-orange uppercase tracking-widest mb-1">Pakej LEGEND</h3>
-                    <div class="text-2xl font-bold text-white mb-3 font-mono">RM 55.90<span class="text-[10px] opacity-50 font-normal font-sans"> / bulan</span></div>
-                    <ul class="text-[10px] space-y-2 mb-4 text-gray-300">
-                        <li>👑 <span class="font-bold">Semua Fungsi PREMIUM</span></li>
-                        <li>👑 Modul Cukai LHDN & E-Invoice</li>
-                        <li>👑 WA Turbo (Auto Blast)</li>
-                        <li>👑 Bebas Watermark & Custom Logo</li>
-                    </ul>
-                    <button onclick="buyPlan('LEGEND')" class="w-full bg-orange hover:bg-orange/90 text-white py-3 rounded-lg font-bold text-[10px] transition shadow-[0_0_15px_rgba(255,87,34,0.4)]">LANGGAN LEGEND</button>
-                </div>
-                
-                <p class="text-[8px] text-center opacity-50 mt-4 font-mono">*Pakej Tahunan / Lifetime juga tersedia. Sila hubungi admin.</p>
-            </div>
+        
+        <div class="flex justify-between items-center border-t border-white/5 pt-2 mt-1">
+            <div id="auth-status" class="text-[9px] bg-fluxCyan/10 px-2 py-1 rounded text-fluxCyan font-mono tracking-widest uppercase border border-fluxCyan/30">BASIC MODE</div>
+            <div id="sync-status" class="text-[9px] text-gray-400 font-mono flex items-center gap-1">System: Offline Ready</div>
         </div>
-    </div>
+    </header>
 
-    <div id="settings-page" class="fixed inset-0 bg-darkBg/95 backdrop-blur-xl z-[100] hidden overflow-y-auto p-6">
-        <div class="max-w-md mx-auto">
-            <div class="flex justify-between items-center mb-8">
-                <h2 class="text-xl font-bold text-white">System Settings</h2>
-                <button onclick="closeSettings()" class="text-2xl opacity-50 hover:opacity-100 transition text-white">✕</button>
-            </div>
-            <div class="space-y-4 pb-20">
-                <div class="bg-indigo/10 p-4 rounded-xl border border-indigo/30">
-                    <p class="text-[10px] mb-3 uppercase font-bold tracking-widest text-indigo">Pengurusan Lesen KETICK</p>
-                    <input type="text" id="settings-license-key" placeholder="Paste Kunci Lesen Di Sini" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary font-mono text-center mb-2 text-lime">
-                    <button onclick="applyNewLicense()" class="w-full bg-indigo hover:bg-indigo/90 text-white py-3 rounded-lg font-bold text-[10px] transition">SAHKAN LESEN BARU</button>
-                    <p id="license-info-display" class="text-[8px] text-center mt-3 font-bold text-gray-400 font-mono"></p>
-                </div>
-
-                <div class="bg-darkCard p-6 rounded-xl border border-dashed border-darkBorder text-center">
-                    <img id="logo-preview" src="https://via.placeholder.com/100" class="h-20 mx-auto mb-4 object-contain rounded">
-                    <input type="file" id="biz-logo-input" onchange="previewLogo(this)" class="hidden">
-                    <label for="biz-logo-input" class="bg-[#2A2A2A] px-4 py-2 rounded-lg text-[10px] font-bold cursor-pointer hover:bg-[#333] transition text-white">Muat Naik Logo</label>
-                </div>
-                <input type="text" id="biz-name" placeholder="Nama Bisnes" class="bg-darkCard border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary">
-                <textarea id="biz-address" placeholder="Alamat" class="bg-darkCard border border-darkBorder p-3 rounded-lg w-full text-sm outline-none h-20 focus:border-primary"></textarea>
-                <input type="text" id="biz-phone" placeholder="No. Telefon" class="bg-darkCard border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary font-mono">
-                
-                <div class="bg-darkCard p-4 rounded-xl border border-darkBorder">
-                    <p class="text-[10px] opacity-50 mb-3 uppercase font-bold tracking-widest text-white">Maklumat Pembayaran</p>
-                    <input type="text" id="biz-bank" placeholder="Nama Bank" class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg w-full text-sm outline-none mb-2 focus:border-primary">
-                    <input type="text" id="biz-acc-no" placeholder="No. Akaun" class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg w-full text-sm outline-none mb-2 focus:border-primary font-mono">
-                    <input type="text" id="biz-acc-name" placeholder="Nama Pemegang Akaun" class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg w-full text-sm outline-none focus:border-primary">
-                </div>
-                <button onclick="saveSettings()" class="w-full bg-primary hover:bg-primaryHover text-white py-4 rounded-lg font-bold transition active:scale-95 text-xs uppercase tracking-widest">Simpan Tetapan</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="max-w-md mx-auto">
-        <div class="overflow-x-auto pb-2 no-scrollbar mb-4">
-            <nav class="flex gap-2 bg-darkCard p-1 rounded-xl border border-darkBorder w-[180%] sm:w-[130%]">
-                <button onclick="switchTab('tab-dash')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition opacity-50 text-gray-300 whitespace-nowrap" id="btn-dash">DASHBOARD</button>
-                <button onclick="switchTab('tab-pos')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition active-tab text-white whitespace-nowrap" id="btn-pos">POS</button>
-                <button onclick="switchTab('tab-crm')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition opacity-50 text-gray-300 whitespace-nowrap" id="btn-crm">CRM</button>
-                <button onclick="switchTab('tab-555')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition opacity-50 text-gray-300 whitespace-nowrap" id="btn-555">555</button>
-                <button onclick="switchTab('tab-inventory')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition opacity-50 text-gray-300 whitespace-nowrap" id="btn-inventory">STOK</button>
-                <button onclick="switchTab('tab-lhdn')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition opacity-50 text-gray-300 whitespace-nowrap" id="btn-lhdn">LHDN</button>
-                <button onclick="switchTab('tab-history')" class="tab-btn flex-1 py-3 rounded-lg font-bold text-[10px] transition opacity-50 text-gray-300 whitespace-nowrap" id="btn-history">SEJARAH</button>
+    <div class="px-4 mb-4">
+        <div class="overflow-x-auto pb-2 no-scrollbar relative">
+            <nav class="flex gap-2 w-[180%] sm:w-[130%]">
+                <button onclick="switchTab('tab-dash')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap" id="btn-dash">DASHBOARD</button>
+                <button onclick="switchTab('tab-pos')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap active-tab" id="btn-pos">POS</button>
+                <button onclick="switchTab('tab-crm')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap" id="btn-crm">CRM</button>
+                <button onclick="switchTab('tab-555')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap" id="btn-555">555</button>
+                <button onclick="switchTab('tab-inventory')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap" id="btn-inventory">STOK</button>
+                <button onclick="switchTab('tab-lhdn')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap" id="btn-lhdn">LHDN</button>
+                <button onclick="switchTab('tab-history')" class="tab-btn flex-1 glass-panel py-3 rounded-lg font-bold text-[10px] text-gray-400 transition whitespace-nowrap" id="btn-history">SEJARAH</button>
             </nav>
         </div>
+    </div>
 
-        <div id="tab-dash" class="tab-content fade-in-up hidden pb-10">
+    <main class="px-4 pb-20">
+        
+        <div id="tab-dash" class="tab-content fade-in-up hidden">
             <div id="dashboard-container"></div>
-            <div class="bg-darkCard border border-darkBorder p-5 rounded-xl mt-6 shadow-sm">
+            <div class="glass-panel p-5 rounded-xl mt-6">
                 <h2 class="text-xs font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Data Kupon Diskaun</h2>
                 <form id="kupon-form" class="space-y-3" onsubmit="event.preventDefault(); createNewKupon();">
-                    <input type="text" id="kp-code" placeholder="Kod (cth: RAYA5)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none uppercase font-mono focus:border-primary">
+                    <input type="text" id="kp-code" placeholder="Kod (cth: RAYA5)" class="glass-input p-3 rounded-lg w-full text-xs uppercase font-mono">
                     <div class="grid grid-cols-2 gap-2">
-                        <select id="kp-type" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none text-white">
-                            <option value="PERCENT" class="bg-[#1A1A1A]">Peratus (%)</option>
-                            <option value="FIXED" class="bg-[#1A1A1A]">Tetap (RM)</option>
+                        <select id="kp-type" class="glass-input p-3 rounded-lg w-full text-xs">
+                            <option value="PERCENT" class="bg-darkBg">Peratus (%)</option>
+                            <option value="FIXED" class="bg-darkBg">Tetap (RM)</option>
                         </select>
-                        <input type="number" id="kp-value" placeholder="Nilai (Amt/%)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary font-mono">
+                        <input type="number" id="kp-value" placeholder="Nilai" class="glass-input p-3 rounded-lg w-full text-xs font-mono">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="kp-min" placeholder="Min. Belanja (RM)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary font-mono">
-                        <input type="number" id="kp-qty" placeholder="Had Kuantiti" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary font-mono">
+                        <input type="number" id="kp-min" placeholder="Min. Belanja" class="glass-input p-3 rounded-lg w-full text-xs font-mono">
+                        <input type="number" id="kp-qty" placeholder="Had Kuantiti" class="glass-input p-3 rounded-lg w-full text-xs font-mono">
                     </div>
-                    <button type="submit" id="btn-save-kupon" class="w-full bg-primary hover:bg-primaryHover text-white py-3 rounded-lg font-bold text-[10px] transition uppercase tracking-widest">Execute Process</button>
+                    <button type="submit" id="btn-save-kupon" class="w-full bg-fluxCyan hover:bg-cyan-400 text-black py-3 rounded-lg font-bold text-[10px] uppercase tracking-widest">Execute Process</button>
                 </form>
-                <h3 class="text-[10px] font-bold mt-6 mb-3 opacity-50 uppercase tracking-widest text-gray-400">Senarai Aktif</h3>
-                <div id="kupon-manager-list" class="space-y-2"></div>
+                <div id="kupon-manager-list" class="space-y-2 mt-4"></div>
             </div>
         </div>
 
-        <div id="tab-pos" class="tab-content fade-in-up pb-10">
+        <div id="tab-pos" class="tab-content fade-in-up">
             <div class="flex flex-col gap-4">
-                <div class="bg-darkCard p-4 rounded-xl border border-darkBorder shadow-sm relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-indigo/20 text-indigo text-[8px] px-2 py-1 rounded-bl-lg font-bold uppercase">Wajib Isi</div>
+                <div class="glass-panel p-4 rounded-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-fluxPurple/20 text-fluxPurple border border-fluxPurple/30 text-[8px] px-2 py-1 rounded-bl-lg font-bold uppercase">Wajib Isi</div>
                     <p class="text-[10px] opacity-70 font-bold mb-3 uppercase tracking-widest text-gray-400">Data Pelanggan</p>
                     <div class="flex gap-2 mb-3">
-                        <input type="number" id="pos-phone" placeholder="No. Tel (Mula dgn 6)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-[60%] text-xs outline-none focus:border-primary font-mono transition">
-                        <button onclick="searchCustomer()" class="bg-[#2A2A2A] hover:bg-[#333] text-white px-3 rounded-lg text-xs font-bold w-[40%] transition">CARI 🔍</button>
+                        <input type="number" id="pos-phone" placeholder="No. Tel (Mula dgn 6)" class="glass-input p-3 rounded-lg w-[60%] text-xs font-mono">
+                        <button onclick="searchCustomer()" class="glass-input hover:bg-white/10 text-white px-3 rounded-lg text-xs font-bold w-[40%]">CARI 🔍</button>
                     </div>
-                    <input type="text" id="pos-name" placeholder="Nama Pelanggan" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary transition">
+                    <input type="text" id="pos-name" placeholder="Nama Pelanggan" class="glass-input p-3 rounded-lg w-full text-xs">
                 </div>
 
                 <div class="w-full">
                     <h2 class="text-[10px] mb-2 opacity-70 font-bold uppercase tracking-wider px-1 text-gray-400">Database Produk</h2>
-                    <div id="pos-select-list" class="grid grid-cols-3 gap-2 max-h-[25vh] overflow-y-auto p-1"></div>
+                    <div id="pos-select-list" class="grid grid-cols-3 gap-2 max-h-[25vh] overflow-y-auto p-1 no-scrollbar"></div>
                 </div>
                 
-                <div class="bg-darkCard p-5 w-full rounded-xl border border-darkBorder shadow-md">
-                    <div class="mb-4 space-y-2 border-b border-[#2A2A2A] pb-4">
+                <div class="glass-panel p-5 w-full rounded-xl border border-fluxCyan/30 shadow-[0_0_15px_rgba(0,229,255,0.1)]">
+                    <div class="mb-4 space-y-2 border-b border-white/10 pb-4">
                         <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Sistem Transaksi</p>
-                        <select id="pos-payment-method" class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg w-full text-xs font-bold outline-none text-white">
-                            <option value="TUNAI" class="bg-[#1A1A1A]">💵 TUNAI</option>
-                            <option value="QR PAY" class="bg-[#1A1A1A]">📱 QR PAY / E-WALLET</option>
-                            <option value="TRANSFER" class="bg-[#1A1A1A]">🏦 ONLINE TRANSFER</option>
-                            <option value="HUTANG" class="bg-[#1A1A1A]">📖 BUKU 555 (HUTANG)</option>
+                        <select id="pos-payment-method" class="glass-input p-3 rounded-lg w-full text-xs font-bold text-white">
+                            <option value="TUNAI" class="bg-darkBg">💵 TUNAI</option>
+                            <option value="QR PAY" class="bg-darkBg">📱 QR PAY / E-WALLET</option>
+                            <option value="TRANSFER" class="bg-darkBg">🏦 ONLINE TRANSFER</option>
+                            <option value="HUTANG" class="bg-darkBg">📖 BUKU 555 (HUTANG)</option>
                         </select>
                         <div class="flex gap-2">
-                            <input type="text" id="pos-kupon" placeholder="Kod Kupon" class="bg-[#111] border border-[#2A2A2A] p-3 rounded-lg w-[70%] text-xs outline-none uppercase font-mono">
-                            <button onclick="applyKupon()" class="bg-indigo hover:bg-indigo/90 text-white w-[30%] rounded-lg text-[10px] font-bold transition">TUNTUT</button>
+                            <input type="text" id="pos-kupon" placeholder="Kod Kupon" class="glass-input p-3 rounded-lg w-[70%] text-xs uppercase font-mono">
+                            <button onclick="applyKupon()" class="bg-fluxPurple hover:bg-purple-600 text-white w-[30%] rounded-lg text-[10px] font-bold">TUNTUT</button>
                         </div>
                     </div>
 
@@ -328,29 +149,21 @@
                         <h2 class="font-bold text-sm text-white">Troli Jualan</h2>
                         <span class="text-lime font-mono font-bold text-lg" id="next-bill-no-display">#1001</span>
                     </div>
-                    <div id="cart-items" class="space-y-2 mb-4 min-h-[100px] max-h-[25vh] overflow-y-auto border-b border-[#2A2A2A] pb-4 font-mono text-sm"></div>
+                    <div id="cart-items" class="space-y-2 mb-4 min-h-[100px] max-h-[25vh] overflow-y-auto border-b border-white/10 pb-4 font-mono text-sm no-scrollbar"></div>
                     
                     <div class="flex justify-between mb-4 items-end text-white" id="total-price">
                         <span class="text-xs uppercase tracking-widest opacity-70 font-bold">Total:</span>
-                        <span class="text-2xl font-bold font-mono text-lime">RM 0.00</span>
+                        <span class="text-2xl font-bold font-mono text-lime drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]">RM 0.00</span>
                     </div>
 
                     <div class="space-y-2">
                         <div class="grid grid-cols-2 gap-2 mt-4">
-                            <button onclick="processTransaction('QUOTATION', 'PDF')" class="border border-[#2A2A2A] text-white text-[10px] py-3 rounded-lg font-bold hover:border-primary transition uppercase tracking-widest">
-                                Quotation
-                            </button>
-                            <button onclick="processTransaction('INVOICE', 'PDF')" class="border border-indigo text-indigo text-[10px] py-3 rounded-lg font-bold hover:bg-indigo/10 transition uppercase tracking-widest">
-                                Invoice
-                            </button>
+                            <button onclick="processTransaction('QUOTATION', 'PDF')" class="glass-input hover:border-fluxCyan text-white text-[10px] py-3 rounded-lg font-bold uppercase tracking-widest">Quotation</button>
+                            <button onclick="processTransaction('INVOICE', 'PDF')" class="border border-fluxPurple text-fluxPurple hover:bg-fluxPurple/10 py-3 rounded-lg text-[10px] font-bold uppercase tracking-widest">Invoice</button>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mt-2">
-                            <button onclick="processTransaction('RECEIPT', 'PDF')" class="bg-primary hover:bg-blue-600 text-white text-[10px] py-3 rounded-lg font-bold transition uppercase tracking-widest flex items-center justify-center gap-2 shadow-md">
-                                📄 Jana PDF
-                            </button>
-                            <button onclick="processTransaction('RECEIPT', 'BT')" class="bg-indigo hover:bg-indigo-600 text-white text-[10px] py-3 rounded-lg font-bold transition uppercase tracking-widest flex items-center justify-center gap-2 shadow-md">
-                                🖨️ Print BT
-                            </button>
+                            <button onclick="processTransaction('RECEIPT', 'PDF')" class="bg-fluxCyan hover:bg-cyan-400 text-black text-[10px] py-3 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(0,229,255,0.4)]">📄 Jana PDF</button>
+                            <button onclick="processTransaction('RECEIPT', 'BT')" class="bg-fluxPurple hover:bg-purple-600 text-white text-[10px] py-3 rounded-lg font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_0_10px_rgba(176,0,255,0.4)]">🖨️ Print BT</button>
                         </div>
                         <button onclick="cancelBill()" class="w-full text-[10px] opacity-50 py-3 mt-1 hover:text-orange transition text-gray-400 uppercase tracking-widest font-bold">Batalkan Proses</button>
                     </div>
@@ -358,137 +171,77 @@
             </div>
         </div>
 
-        <div id="tab-crm" class="tab-content fade-in-up hidden pb-10">
-            <div class="bg-darkCard border border-indigo/50 p-5 rounded-xl mb-6 shadow-sm">
-                <h2 class="text-xs font-bold mb-3 text-indigo uppercase tracking-widest">Pusat Operasi WA Blast</h2>
-                <textarea id="blast-msg" placeholder="Mesej anda... Guna [NAMA] untuk personalisasi." class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs h-24 outline-none mb-3 focus:border-indigo"></textarea>
+        <div id="tab-crm" class="tab-content fade-in-up hidden">
+            <div class="glass-panel p-5 rounded-xl mb-6">
+                <h2 class="text-xs font-bold mb-3 text-fluxCyan uppercase tracking-widest">Pusat Operasi WA Blast</h2>
+                <textarea id="blast-msg" placeholder="Mesej anda... Guna [NAMA]" class="glass-input p-3 rounded-lg w-full text-xs h-24 mb-3"></textarea>
                 <div class="flex gap-2 mb-4 items-center">
-                    <input type="number" id="blast-delay" value="30" min="15" max="999" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-1/3 text-xs outline-none text-center font-mono" title="Delay (saat)">
-                    <button onclick="startWABlast()" class="bg-primary hover:bg-primaryHover text-white w-1/3 rounded-lg text-[10px] font-bold py-3 transition">🚀 SEMI-AUTO</button>
-                    <button onclick="startTurboBlast()" class="bg-orange hover:bg-orange/90 text-white w-1/3 rounded-lg text-[10px] font-bold py-3 shadow-[0_0_10px_rgba(255,87,34,0.3)] transition">🔥 TURBO</button>
+                    <input type="number" id="blast-delay" value="30" class="glass-input p-3 rounded-lg w-1/3 text-xs text-center font-mono">
+                    <button onclick="startWABlast()" class="bg-fluxCyan text-black w-1/3 rounded-lg text-[10px] font-bold py-3">🚀 SEMI</button>
+                    <button onclick="startTurboBlast()" class="bg-orange text-white w-1/3 rounded-lg text-[10px] font-bold py-3 shadow-[0_0_10px_rgba(255,87,34,0.3)]">🔥 TURBO</button>
                 </div>
                 <div id="blast-status-display" class="text-center text-[10px] text-gray-300 font-mono"></div>
             </div>
-
-            <div class="bg-darkCard p-4 rounded-xl border border-darkBorder mb-6 shadow-sm">
-                <h2 class="text-[10px] font-bold mb-3 opacity-70 uppercase text-primary tracking-widest">Tambah Pelanggan Baru</h2>
-                <div class="flex gap-2 mb-4 border-b border-[#2A2A2A] pb-4">
-                    <input type="text" id="crm-manual-name" placeholder="Nama" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-1/2 text-xs outline-none focus:border-primary transition">
-                    <input type="number" id="crm-manual-phone" placeholder="No Tel (601...)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-1/2 text-xs outline-none focus:border-primary font-mono transition">
-                    <button onclick="addManualCustomer()" class="bg-primary hover:bg-primaryHover text-white px-3 rounded-lg font-bold text-xs transition">➕</button>
-                </div>
-
-                <h2 class="text-[9px] font-bold mb-2 opacity-50 uppercase text-center tracking-wider text-gray-400">Import Data Pukal</h2>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="importPhoneContacts()" class="bg-[#2A2A2A] hover:bg-[#333] text-white p-2 rounded-lg text-[9px] font-bold flex flex-col items-center gap-1 transition uppercase tracking-wider">
-                        <span class="text-lg">📱</span> Dari Telefon
-                    </button>
-                    <button onclick="document.getElementById('xls-upload').click()" class="bg-[#2A2A2A] hover:bg-[#333] text-white p-2 rounded-lg text-[9px] font-bold flex flex-col items-center gap-1 transition uppercase tracking-wider">
-                        <span class="text-lg">📊</span> Dari Excel/CSV
-                    </button>
-                    <input type="file" id="xls-upload" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(this)">
-                </div>
-            </div>
-            <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase tracking-widest text-gray-400">Database Pelanggan</h2>
             <div id="crm-list" class="space-y-1"></div>
         </div>
 
-        <div id="tab-555" class="tab-content fade-in-up hidden pb-10">
+        <div id="tab-555" class="tab-content fade-in-up hidden">
             <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase tracking-widest text-orange">Log Pemiutang (Buku 555)</h2>
             <div id="buku555-list" class="space-y-2"></div>
         </div>
 
-        <div id="tab-inventory" class="tab-content fade-in-up hidden pb-10">
-            <section class="mb-8">
-                <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-sm">
-                    <h2 class="text-[10px] font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Input Data Produk</h2>
-                    <form id="add-product-form" class="space-y-3">
-                        <input type="text" id="p-name" placeholder="Nama Produk" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary" required>
-                        <textarea id="p-desc" placeholder="Penerangan Produk (Pilihan)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary h-16"></textarea>
-                        <div class="grid grid-cols-2 gap-3">
-                            <input type="number" id="p-price" step="0.01" placeholder="Harga (RM)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary font-mono" required>
-                            <input type="number" id="p-qty" placeholder="Kuantiti" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary font-mono" required>
-                        </div>
-                        <input type="file" id="p-img" accept="image/*" class="text-[10px] w-full file:bg-[#2A2A2A] file:border-none file:text-white file:rounded file:px-3 file:py-1">
-                        <button type="submit" id="btn-save-inv" class="w-full bg-primary hover:bg-primaryHover text-white py-3 rounded-lg font-bold text-xs mt-2 transition uppercase tracking-widest">Execute Process</button>
-                    </form>
-                </div>
-            </section>
-            <section>
-                <h2 class="text-[10px] font-bold mb-3 opacity-70 px-1 uppercase tracking-widest text-gray-400">Database Inventori</h2>
-                <div id="inventory-list" class="pb-20"></div>
-            </section>
-        </div>
-
-        <div id="tab-lhdn" class="tab-content fade-in-up hidden pb-10">
-            <div class="bg-darkCard border border-darkBorder p-5 rounded-xl shadow-sm mb-6">
-                <h2 class="text-[10px] font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Log Perbelanjaan Bisnes</h2>
-                <form id="lhdn-expense-form" class="space-y-3" onsubmit="event.preventDefault(); saveNewExpense();">
-                    <input type="text" id="exp-desc" placeholder="Tujuan / Item?" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" step="0.01" id="exp-amount" placeholder="Amaun (RM)" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none focus:border-primary font-mono">
-                        <select id="exp-cat" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-sm outline-none text-white">
-                            <option value="Bahan Mentah" class="bg-[#1A1A1A]">Bahan Mentah</option>
-                            <option value="Sewa" class="bg-[#1A1A1A]">Sewa Premis</option>
-                            <option value="Gaji" class="bg-[#1A1A1A]">Gaji Pekerja</option>
-                            <option value="Pemasaran" class="bg-[#1A1A1A]">Marketing / Ads</option>
-                            <option value="Lain-lain" class="bg-[#1A1A1A]">Lain-lain</option>
-                        </select>
+        <div id="tab-inventory" class="tab-content fade-in-up hidden">
+            <div class="glass-panel p-5 rounded-xl mb-6">
+                <h2 class="text-[10px] font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Input Data Produk</h2>
+                <form id="add-product-form" class="space-y-3">
+                    <input type="text" id="p-name" placeholder="Nama Produk" class="glass-input p-3 rounded-lg w-full text-sm" required>
+                    <textarea id="p-desc" placeholder="Penerangan" class="glass-input p-3 rounded-lg w-full text-sm h-16"></textarea>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="p-price" step="0.01" placeholder="Harga (RM)" class="glass-input p-3 rounded-lg w-full text-sm font-mono" required>
+                        <input type="number" id="p-qty" placeholder="Kuantiti" class="glass-input p-3 rounded-lg w-full text-sm font-mono" required>
                     </div>
-                    <div class="flex items-center gap-2 mt-2">
-                        <label for="exp-img" class="flex-1 bg-[#2A2A2A] hover:bg-[#333] text-white p-3 rounded-lg text-center text-[10px] font-bold cursor-pointer transition flex justify-center items-center gap-2 uppercase tracking-widest">
-                            📷 Lampir Resit
-                        </label>
-                        <input type="file" id="exp-img" accept="image/*" capture="environment" class="hidden">
-                        <button type="submit" class="flex-1 bg-primary hover:bg-primaryHover text-white py-3 rounded-lg font-bold text-[10px] transition shadow-md uppercase tracking-widest">Simpan Kos</button>
-                    </div>
+                    <input type="file" id="p-img" accept="image/*" class="text-[10px] w-full text-gray-400">
+                    <button type="submit" id="btn-save-inv" class="w-full bg-fluxCyan text-black py-3 rounded-lg font-bold text-xs mt-2 uppercase tracking-widest">Sahkan Stok</button>
                 </form>
             </div>
-
-            <div id="lhdn-expenses-list" class="mb-8"></div>
-
-            <div class="bg-darkCard border border-indigo/30 p-5 rounded-xl shadow-sm mb-6">
-                <h2 class="text-[10px] font-bold mb-4 uppercase tracking-widest text-indigo">Jana Laporan Analitik (Excel)</h2>
-                <div class="grid grid-cols-2 gap-2">
-                    <button onclick="generateTaxReport('MONTH')" class="bg-[#111] border border-indigo/50 text-indigo py-3 rounded-lg text-[10px] font-bold hover:bg-indigo/10 transition shadow-sm uppercase tracking-widest">Report Bulan</button>
-                    <button onclick="generateTaxReport('YEAR')" class="bg-indigo hover:bg-indigo/90 text-white py-3 rounded-lg text-[10px] font-bold transition shadow-[0_0_10px_rgba(79,70,229,0.3)] uppercase tracking-widest">Report Tahun</button>
-                </div>
-            </div>
+            <div id="inventory-list" class="pb-20"></div>
         </div>
 
-        <div id="tab-history" class="tab-content fade-in-up hidden pb-10">
-            <div class="bg-darkCard p-3 rounded-xl border border-darkBorder mb-6 shadow-sm">
-                <input type="text" id="history-search" oninput="filterHistory()" placeholder="Cari Nama / No Tel / Tarikh / #Bil" class="bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary font-mono">
+        <div id="tab-lhdn" class="tab-content fade-in-up hidden">
+            <div class="glass-panel p-5 rounded-xl mb-6">
+                <h2 class="text-[10px] font-bold mb-4 opacity-70 uppercase tracking-widest text-lime">Log Perbelanjaan</h2>
+                <form id="lhdn-expense-form" class="space-y-3" onsubmit="event.preventDefault(); saveNewExpense();">
+                    <input type="text" id="exp-desc" placeholder="Item?" class="glass-input p-3 rounded-lg w-full text-sm">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" step="0.01" id="exp-amount" placeholder="RM" class="glass-input p-3 rounded-lg w-full text-sm font-mono">
+                        <select id="exp-cat" class="glass-input p-3 rounded-lg w-full text-sm">
+                            <option value="Bahan Mentah" class="bg-darkBg">Bahan Mentah</option>
+                            <option value="Sewa" class="bg-darkBg">Sewa Premis</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-fluxCyan text-black py-3 rounded-lg font-bold text-[10px] uppercase tracking-widest mt-2">Simpan Kos</button>
+                </form>
+            </div>
+            <div id="lhdn-expenses-list" class="mb-8"></div>
+        </div>
+
+        <div id="tab-history" class="tab-content fade-in-up hidden">
+            <div class="glass-panel p-3 rounded-xl mb-6">
+                <input type="text" id="history-search" oninput="filterHistory()" placeholder="Cari Rekod..." class="glass-input p-3 rounded-lg w-full text-xs font-mono">
             </div>
             <div id="history-list"></div>
         </div>
-    </div>
+    </main>
 
-    <div id="custom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-darkCard border border-darkBorder rounded-xl p-6 max-w-sm w-full shadow-2xl transform transition-all text-center">
-            <div class="mb-4">
-                <div class="w-12 h-12 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center mb-3 text-xl border border-primary/20">💬</div>
-                <h3 class="text-sm font-bold text-white mb-2 tracking-wide" id="custom-modal-title">System Alert</h3>
-                <p id="custom-modal-msg" class="text-xs text-gray-300 whitespace-pre-wrap"></p>
-            </div>
-            <input type="text" id="custom-modal-input" class="hidden bg-[#111] border border-darkBorder p-3 rounded-lg w-full text-xs outline-none focus:border-primary mb-4 text-lime font-mono text-center">
+    <div id="custom-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] hidden flex items-center justify-center p-4">
+        <div class="glass-panel border-fluxCyan/50 rounded-xl p-6 max-w-sm w-full text-center">
+            <h3 class="text-sm font-bold text-white mb-2" id="custom-modal-title">Alert</h3>
+            <p id="custom-modal-msg" class="text-xs text-gray-300 mb-4"></p>
+            <input type="text" id="custom-modal-input" class="hidden glass-input p-3 rounded-lg w-full text-xs mb-4 text-center">
             <div class="flex gap-2 justify-center">
-                <button id="custom-modal-cancel" class="flex-1 py-3 rounded-lg font-bold text-[10px] bg-[#2A2A2A] text-white hover:bg-[#333] transition hidden uppercase tracking-widest">Batal</button>
-                <button id="custom-modal-ok" class="flex-1 py-3 rounded-lg font-bold text-[10px] bg-primary hover:bg-primaryHover text-white shadow-md transition uppercase tracking-widest">Teruskan</button>
+                <button id="custom-modal-cancel" class="flex-1 py-3 rounded-lg font-bold text-[10px] glass-input hidden">Batal</button>
+                <button id="custom-modal-ok" class="flex-1 py-3 rounded-lg font-bold text-[10px] bg-fluxCyan text-black">Ok</button>
             </div>
-        </div>
-    </div>
-
-    <div id="paywall-overlay" class="fixed inset-0 bg-darkBg/95 backdrop-blur-xl z-[99999] hidden flex flex-col items-center justify-center text-white p-6 text-center">
-        <div class="bg-white/5 border border-white/10 p-8 rounded-xl max-w-sm w-full shadow-2xl">
-            <div class="text-5xl mb-4 text-orange">🔒</div>
-            <h1 class="text-xl font-bold text-white mb-2 uppercase tracking-widest">Sistem Terkunci</h1>
-            <p id="paywall-msg" class="text-xs opacity-70 mb-6 font-mono">Lesen tamat tempoh. Sila perbaharui lesen untuk membuka akses data.</p>
-            
-            <input type="text" id="paywall-key-input" placeholder="Masukkan Kunci Lesen" class="bg-black/50 border border-white/20 p-3 rounded-lg w-full text-center text-xs outline-none focus:border-primary mb-4 font-mono text-lime">
-            <button onclick="unlockPaywall()" class="bg-primary hover:bg-primaryHover px-6 py-3 rounded-lg font-bold w-full text-xs shadow-lg transition uppercase tracking-widest">Buka Sistem</button>
-            
-            <button onclick="window.open('https://api.whatsapp.com/send?phone=601123266755&text=Salam%20Admin,%20saya%20nak%20beli/renew%20lesen%20KETICK', '_blank')" class="mt-6 text-[10px] text-gray-400 hover:text-white transition uppercase tracking-widest">Hubungi Pentadbir</button>
         </div>
     </div>
 
