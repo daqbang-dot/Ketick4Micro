@@ -1,1 +1,71 @@
-.gitkeep
+/* css/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #050505;
+    color: #ffffff;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* --- ANIMATED FLUX BACKGROUND (Latar 'Hidup') --- */
+.flux-bg {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1;
+    background: radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(176, 0, 255, 0.08), transparent 25%);
+    animation: pulseGlow 15s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.1); }
+}
+
+/* --- GLASSMORPHISM CARDS --- */
+.glass-panel {
+    background: rgba(20, 20, 25, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.glass-input {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+.glass-input:focus {
+    border-color: #00E5FF;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+    outline: none;
+}
+
+/* --- ACTIVE TABS (Mission Control Style) --- */
+.active-tab {
+    background: linear-gradient(135deg, rgba(0, 229, 255, 0.2) 0%, rgba(176, 0, 255, 0.2) 100%);
+    border: 1px solid rgba(0, 229, 255, 0.5);
+    color: #00E5FF !important;
+    box-shadow: inset 0 0 10px rgba(0, 229, 255, 0.1), 0 0 15px rgba(0, 229, 255, 0.2);
+    text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+
+/* --- SCROLLBARS --- */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+/* --- ANIMATIONS --- */
+.fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
